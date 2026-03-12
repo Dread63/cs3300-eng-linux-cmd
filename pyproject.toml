@@ -1,0 +1,8 @@
+[project]
+name = "eng-linux-cmd"
+
+dependencies = [
+    "ollama",
+    "typer",
+    "requests",
+]
