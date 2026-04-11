@@ -1,10 +1,9 @@
-name: eng-linux-cmd
+name: en-linux
 channels:
   - conda-forge
 dependencies:
-  - python=3.14.3
+  - python=3.12
   - pip
   - pip:
-    - ollama
-    - requests
-    - typer
+    - llama-cpp-python
+    - rich  # all terminal cosmatic things
