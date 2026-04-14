@@ -1,4 +1,5 @@
 import typer
 
 def cli():
-    return 0
+    user_input = input("Enter your command request (or 'exit' to quit): ")
+    return user_input

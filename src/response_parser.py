@@ -1,7 +1,7 @@
+# Parse response only used to hide internal functionality of clean command
 def parse_response(llm_output):
 
-    raw_command = llm_output['message']['content']
-    return clean_command(raw_command)
+    return clean_command(llm_output)
 
 def clean_command(raw_command):
     # Remove backticks

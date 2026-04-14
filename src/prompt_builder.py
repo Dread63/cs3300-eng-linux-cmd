@@ -1,3 +1,4 @@
-
 def build_prompt(user_input):
-    return 0
+    
+    # Not implemented yet, need to agree in meeting about proper functionality?
+    return user_input
