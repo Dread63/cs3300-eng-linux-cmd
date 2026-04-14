@@ -1,0 +1,18 @@
+[
+    {
+        "role": "user",
+        "content": "search for all files in the current directory and child directories which are of the file type .txt and filename starts with the letters ra"
+    },
+    {
+        "role": "assistant",
+        "content": "find . -type f -name \"ra*.txt\""
+    },
+    {
+        "role": "user",
+        "content": "search for all files that end in .py and display them in rows in alphabetical order"
+    },
+    {
+        "role": "assistant",
+        "content": "find . -type f -name \"*.py\" | sort"
+    }
+]
