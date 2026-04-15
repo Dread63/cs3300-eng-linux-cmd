@@ -5,3 +5,8 @@
 4) Ensure the installation of the conda environment completed successfully by running `conda env list`
     > You should see eng-linux-cmd listed as an available conda environment
 5) Activate the conda environment by running `conda activate eng-linux-cmd` in either your terminal or selecting it in your IDE
+
+# Updating Conda Environment
+1) Open a terminal and navigate to the root directory of the project
+2) Activate the en-linux conda envrionment within the terminal
+3) Run `conda env update -f environment.yml'
