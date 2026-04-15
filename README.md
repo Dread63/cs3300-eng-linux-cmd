@@ -9,4 +9,4 @@
 # Updating Conda Environment
 1) Open a terminal and navigate to the root directory of the project
 2) Activate the en-linux conda envrionment within the terminal
-3) Run `conda env update -f environment.yml'
+3) Run `conda env update -f environment.yml`
