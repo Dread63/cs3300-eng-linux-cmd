@@ -1,8 +1,22 @@
-"""
-terminal_ui.py makes the code in the terminal look good
+from rich.console import Console
 
-All terminal input/output for the command assistant.
-Uses the 'rich' library for color, panels, and spinners.
+console = Console()
 
-Install:  pip install rich
-"""
+def display_welcome():
+    console.print("[bold blue]Linux Command Assistant (Placeholder UI)[/bold blue]")
+
+def display_command(command: str):
+    console.print(f"\n[bold green]Suggested Command:[/bold green] {command}")
+
+def display_explanation(summary: str, breakdown: list[str], warning: str):
+    console.print(f"\n[blue]Summary:[/blue] {summary}")
+    for item in breakdown:
+        console.print(f" - {item}")
+    if warning:
+        console.print(f"[red]Warning:[/red] {warning}")
+
+def display_error(msg: str):
+    console.print(f"[red]Error:[/red] {msg}")
+
+def display_status(msg: str):
+    console.print(f"[italic]{msg}...[/italic]")
