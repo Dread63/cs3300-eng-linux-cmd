@@ -7,3 +7,5 @@ dependencies:
   - pip:
     - llama-cpp-python
     - rich  # all terminal cosmatic things
+    - typer
+    - huggingface-hub
