@@ -42,6 +42,7 @@ class ChatSession:
         return []
 
     # Save message history to file for next use
+    # TODO: Implement max token verification (default for llama-cpp-python is 512)
     def save_msg_history(self):
         try:
             with open(self.chat_history_file, "w") as file:
@@ -57,7 +58,6 @@ class ChatSession:
     # Print the history stored in the history[] array
     def print_msg_history(self):
         print(json.dumps(self.history, indent=2))
-
 
 # Input coming from cli.py (thorugh main as pipeline)
 def ollama_client(llm_input):
