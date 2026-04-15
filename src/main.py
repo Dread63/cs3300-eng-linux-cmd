@@ -1,62 +1,54 @@
-from ollama_client import ollama_client
-from cli import cli
-from command_runner import run_command
-from command_validator import validate_command
-from prompt_builder import build_prompt
-from response_parser import parse_response
+import cli
+from ollama_client import ollama_client, llm
+from security import validate_command, run_command
+from explainer import CommandExplainer
+import terminal_ui as ui
 
-def main():
-
-    print("Type 'exit' or 'quit' to close the program.\n")
+def cli_loop(model=None, explain_flag=False):
+    
+    ui.display_welcome()
+    explainer = CommandExplainer(llm)
 
     while True:
+        user_input = input("\nEnter English request (or 'exit'): ").strip()
 
-        # Get user input
-        user_input = cli()
-
+        # Exit loop if user entered either exit or quit
         if user_input.lower() in ['exit', 'quit']:
-            print("Exiting...\n")
             break
             
-        if not user_input.strip():
+        if not user_input:
             continue
 
-        # Pass input to prompt builder (currently does nothing)
-        prompt = build_prompt(user_input)
-
-        # Pass prompt to ollama client for processing
-        print(f"\nProcessing request...")
-        # Pass prompt to ollama client
-        llm_output = ollama_client(prompt)
-
-        # Parse llm response in order to validate cmd
-        parsed_cmd = parse_response(llm_output)
-
-        print(f"\nSuggested Command: {parsed_cmd}")
-        print("Verifing command saftery...\n")
-
-        # Validate llm output with user input
-        is_safe = validate_command(parsed_cmd)
-
-        if is_safe:
-
-            user_confirmation = input(f"Would you like to run this command? (y/n): ").strip().lower()
+        # Generate the user command by running client
+        ui.display_status("Generating command")
+        result = ollama_client(user_input)
+        
+        if not result.success:
+            ui.display_error(result.error)
+            continue
             
-            if user_confirmation == 'y':
+        ui.display_command(result.command)
 
-                print(f"Executing: {parsed_cmd}")
+        # Explain command if flag is set
+        if explain_flag:
+            ui.display_status("Explaining")
+            exp = explainer.explain(result.command)
+            if exp.success:
+                ui.display_explanation(exp.summary, exp.breakdown, exp.warning)
 
-                # Store standard output and standard error for printing to shell
-                stdout, stderr = run_command(parsed_cmd, 'y')
-                
-                if stdout:
-                    print(f"\nOutput:\n{stdout}")
-                if stderr:
-                    print(f"\nError:\n{stderr}")
-            else:
-                print("Command cancled by user")
-        else:
-            print("Command is potentially harmful and will not be executed")
+        # Check security of command
+        if not validate_command(result.command):
+            ui.display_error("Command rejected by security policy.")
+            continue
+
+        # Execution of command if user selects yes
+        confirm = input("\nRun command? (y/N): ").lower()
+        if confirm == 'y':
+            ui.display_status("Executing")
+            stdout, stderr = run_command(result.command)
+            if stdout: print(f"Output: {stdout}")
+            if stderr: print(f"Error: {stderr}")
 
 if __name__ == "__main__":
-    main()
+    # Hand control to the CLI module for flag parsing
+    cli.run()
