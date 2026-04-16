@@ -8,10 +8,10 @@ from dataclasses import dataclass # from translator.py
 import requests
 from clint.textui import progress
 
-MODEL_DIR = os.path.expanduser("~/.local/share/eng-linux-cmd/")
+#MODEL_DIR = os.path.expanduser("~/.local/share/eng-linux-cmd/")
 MODEL_NAME = "qwen2.5-1.5b-instruct-q5_k_m.gguf"
 MODEL_DOWNLOAD_URL = "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/qwen2.5-1.5b-instruct-q5_k_m.gguf"
-MODEL_FULL_PATH = os.path.join(MODEL_DIR, MODEL_NAME)
+#MODEL_FULL_PATH = os.path.join(MODEL_DIR, MODEL_NAME)
 MAX_MSG_RETENTION = 10
 
 #TODO: Implement error handling (try/catch blocks)
@@ -99,11 +99,27 @@ def _parse_response(raw: str) -> TranslationResult:
     )
 # --- End of translator.py logic ---
 
+# TODO: Fix library searching on macos
+def get_model_dir():
+    system_name = platform.system()
+
+    if system_name == "Darwin":
+        return os.path.expanduser("~/Library/Application Support/eng-linux-cmd")
+    elif system_name == "Linux":
+        return os.path.expanduser("~/.local/share/eng-linux-cmd")
+    else:
+        raise OSError(f"Unsupported operating system: {system_name}")
+
+MODEL_DIR = get_model_dir()
+MODEL_FULL_PATH = os.path.join(MODEL_DIR, MODEL_NAME)
+
 # Download model on first run if file doesn't exist
 if not os.path.exists(MODEL_FULL_PATH):
     
     print("Model not installed. Downloading now...")
     print(f"Installing {MODEL_NAME}:")
+
+    os.makedirs(MODEL_DIR, exist_ok=True)
 
     # Stream file download so we can write each chunk as they come through
     with requests.get(MODEL_DOWNLOAD_URL, stream=True) as r:
@@ -119,7 +135,6 @@ if not os.path.exists(MODEL_FULL_PATH):
             for chunk in progress.bar(r.iter_content(chunk_size=8192), expected_size=(total_file_length/8192 + 1)):
                 f.write(chunk)
                 f.flush()
-
 
 # Model initialization (User's Style)
 llm = Llama(

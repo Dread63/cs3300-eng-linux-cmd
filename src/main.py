@@ -15,7 +15,7 @@ def cli_loop(model=None, explain_flag=False):
         # Exit loop if user entered either exit or quit
         if user_input.lower() in ['exit', 'quit']:
             break
-            
+        
         if not user_input:
             continue
 
