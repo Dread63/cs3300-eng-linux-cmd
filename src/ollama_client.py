@@ -1,9 +1,20 @@
 from llama_cpp import Llama
 import os
+import getpass # used to gather model context
+from datetime import datetime # used to gather model context
 import json
 import platform # from translator.py
-import re       # from translator.py
 from dataclasses import dataclass # from translator.py
+import requests
+from clint.textui import progress
+
+MODEL_DIR = os.path.expanduser("~/.local/share/eng-linux-cmd/")
+MODEL_NAME = "qwen2.5-1.5b-instruct-q5_k_m.gguf"
+MODEL_DOWNLOAD_URL = "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/qwen2.5-1.5b-instruct-q5_k_m.gguf"
+MODEL_FULL_PATH = os.path.join(MODEL_DIR, MODEL_NAME)
+MAX_MSG_RETENTION = 10
+
+#TODO: Implement error handling (try/catch blocks)
 
 # From translator.py
 @dataclass
@@ -27,6 +38,31 @@ def _build_os_context() -> str:
         return platform.system()
     except (AttributeError, OSError):
         return platform.system()
+    
+# Used to gather information on current runtime such as current directory, user information, and date/time
+def build_runtime_context() -> str:
+
+  
+    # Get basics on user information and current directory
+    current_dir = os.getcwd()
+    user = getpass.getuser()
+    date_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+    # List files in current directory (max of 20 for token usage preservation)
+    try:
+        files = os.listdir(current_dir)[:20]
+        files_list = ", ".join(files)
+    except OSError:
+        files_list = "None"
+
+    runtime_context = (
+        f"CURRENT_USER: {user}\n"
+        f"CURRENT_DIRECTORY: {current_dir}\n"
+        f"FILES_IN_DIR: {files_list}\n"
+        f"SYSTEM_TIME: {date_time}"
+    )
+
+    return runtime_context, user
 
 def _parse_response(raw: str) -> TranslationResult:
     """Parse the structured model output into a TranslationResult."""
@@ -63,27 +99,35 @@ def _parse_response(raw: str) -> TranslationResult:
     )
 # --- End of translator.py logic ---
 
+# Download model on first run if file doesn't exist
+if not os.path.exists(MODEL_FULL_PATH):
+    
+    print("Model not installed. Downloading now...")
+    print(f"Installing {MODEL_NAME}:")
+
+    # Stream file download so we can write each chunk as they come through
+    with requests.get(MODEL_DOWNLOAD_URL, stream=True) as r:
+
+        # Used for error checking
+        r.raise_for_status()
+
+        with open(MODEL_FULL_PATH, 'wb') as f:
+
+            total_file_length = int(r.headers.get('content-length'))
+
+            # Download model in 8192 byte chunks and display progress bar (from clint library)
+            for chunk in progress.bar(r.iter_content(chunk_size=8192), expected_size=(total_file_length/8192 + 1)):
+                f.write(chunk)
+                f.flush()
+
+
 # Model initialization (User's Style)
-llm = Llama.from_pretrained(
-    repo_id="bartowski/Qwen2.5-7B-Instruct-GGUF",
-    filename="Qwen2.5-7B-Instruct-Q4_K_M.gguf",
+llm = Llama(
+    model_path=MODEL_FULL_PATH,
+    n_ctx = 2048,
+    n_threads = 4,
     chat_format="chatml",
     verbose=False
-)
-
-# Define LLM identity (Merged OS context and rules)
-os_context = _build_os_context()
-llm_identity = (
-    f"You are a Linux expert on {os_context}. "
-    "Given an English description, output a single safe shell command.\n"
-    "Reply using EXACTLY these three lines:\n"
-    "COMMAND: <the shell command>\n"
-    "CONFIDENCE: high|medium|low\n"
-    "WARNING: <danger note or 'none'>\n\n"
-    "Rules:\n"
-    "- Output only the three lines above, nothing else.\n"
-    "- Never use sudo unless the user explicitly asks.\n"
-    "- Prefer safe flags (e.g. -i for confirmation on rm)."
 )
 
 class ChatSession:
@@ -111,11 +155,51 @@ class ChatSession:
         self.history.append({"role": role, "content": msg_content})
         self.save_msg_history()
 
+    # Remove oldest message if history reaches greater than 10 messages in order to remain in 2048 context window
+    # TODO: Update this to prune based on token size not number of messages
+    def prune_msg_history(self):
+
+        if len(self.history) > MAX_MSG_RETENTION:
+            self.history = self.history[-MAX_MSG_RETENTION:]
+        self.save_msg_history()
+
+# Used to build message using context helper functions and message history, then pass to the model to process
 def ollama_client(llm_input) -> TranslationResult:
+    
+    runtime_state, current_user = build_runtime_context()
+    os_info = _build_os_context()
+
+    # Define LLM identity (Merged OS context and rules)
+    # TODO: Fix confidence level within prompt, currently the confidence level always comes out as "high"
+    llm_identity = (
+        f"You are a Linux expert on {os_info}.\n"
+        f"--- SYSTEM STATE ---\n{runtime_state}\n\n"
+
+        "--- EXAMPLE ---\n"
+        "User: show my home files with an absolute path\n"
+        "Assistant:\n"
+        f"COMMAND: ls /home/{current_user}/\n"
+        "CONFIDENCE: high\n"
+        "WARNING: none\n\n"
+
+        "--- RULES ---\n"
+        "1. Output EXACTLY three lines (COMMAND, CONFIDENCE, WARNING).\n"
+        "2. Use the REAL paths and usernames from the SYSTEM STATE above.\n"
+        "3. Never use generic placeholders like '/username'.\n"
+        "4. Never use sudo unless explicitly requested.\n"
+        "5. Prefer safe flags (e.g. -i for rm).\n\n"
+
+        "--- TASK ---\n"
+        "Now provide the command for the following request:"
+    )
+
     session = ChatSession(chat_history_file="src/chat_history.json")
     session.add_msg_history("user", llm_input)
 
     messages = [{"role": "system", "content": llm_identity}] + session.history
+
+    # After adding users message to history, cut the oldest off
+    session.prune_msg_history()
 
     response = llm.create_chat_completion(
         messages=messages,

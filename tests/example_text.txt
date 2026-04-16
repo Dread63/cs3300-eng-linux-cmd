@@ -1,0 +1,100 @@
+01 INFO User logged in successfully
+02 ERROR Failed to connect to database
+03 WARN Disk space at 85%
+04 DEBUG Variable x = 42
+05 User email: test.user@example.com
+06 Backup completed at 2024-12-01 23:59:59
+07 IP address detected: 192.168.1.1
+08 IPv6 address: fe80::1ff:fe23:4567:890a
+09 URL visited: https://example.com/page?query=test
+10 File path: /var/log/system.log
+11 Windows path: C:\Program Files\App\app.exe
+12 Phone: +1-800-555-1234
+13 Credit card: 4111-1111-1111-1111
+14 Hex value: 0xDEADBEEF
+15 UUID: 550e8400-e29b-41d4-a716-446655440000
+16 Timestamp: 2025-01-15T12:34:56Z
+17 MAC address: 00:1A:2B:3C:4D:5E
+18 HTML tag: <div class="container">
+19 JSON: {"key": "value", "num": 123}
+20 XML: <note><to>User</to></note>
+21 SQL query: SELECT * FROM users WHERE id = 1;
+22 Password attempt: P@ssw0rd!
+23 MixedCaseStringExample
+24 snake_case_variable_name
+25 kebab-case-variable-name
+26 camelCaseVariableName
+27 PascalCaseVariableName
+28 Random text with numbers 12345
+29 Special chars !@#$%^&*()
+30 Brackets [] {} ()
+31 Quoted "string with spaces"
+32 Single 'quoted string'
+33 Multiline-like line continuation \
+34 Trailing spaces here    
+35 Leading spaces here
+36 Tab	separated	values
+37 Comma,separated,values
+38 Pipe|separated|values
+39 Colon:separated:values
+40 Semicolon;separated;values
+41 Repeated word word word
+42 Palindrome level
+43 Number sequence 1 2 3 4 5
+44 Binary 1010101010
+45 Octal 0755
+46 Floating point 3.14159
+47 Scientific 1.23e10
+48 Negative number -42
+49 Positive number +42
+50 Zero 0
+51 Empty string ""
+52 Null value NULL
+53 Boolean true false TRUE FALSE
+54 Log: [ERROR] Something broke
+55 Log: [INFO] All good
+56 Log: [DEBUG] Step reached
+57 Date US: 12/31/2024
+58 Date EU: 31/12/2024
+59 Time: 23:59:59
+60 Time with ms: 23:59:59.123
+61 URL http://test.com
+62 URL https://secure.com
+63 FTP ftp://files.server.com
+64 Email admin@mail-server.co.uk
+65 Subdomain api.dev.example.com
+66 Hashtag #testing
+67 Mention @user123
+68 Emoji 😀 😃 😄
+69 Non-ASCII café naïve résumé
+70 Unicode Ω≈ç√∫˜µ≤≥÷
+71 Escaped newline \n
+72 Escaped tab \t
+73 Regex chars .*?+[](){}|
+74 Start of line ^
+75 End of line $
+76 Word boundary \bword\b
+77 Digits only 9876543210
+78 Letters only abcdefgh
+79 Alphanumeric abc123XYZ
+80 Whitespace only     
+81 Mixed whitespace 	 
+82 JSON array [1, 2, 3]
+83 Nested JSON {"a": {"b": 2}}
+84 HTML entity &amp; &lt; &gt;
+85 CSS color #FF5733
+86 RGB rgb(255, 0, 0)
+87 HSL hsl(120, 100%, 50%)
+88 Base64 SGVsbG8gV29ybGQ=
+89 SHA256 e3b0c44298fc1c149afbf4c8996fb924
+90 Git commit 9fceb02d0ae598e95dc970b74767f19372d61af8
+91 Docker image nginx:latest
+92 Kubernetes pod my-app-12345
+93 Env var PATH=/usr/bin:/bin
+94 Cron schedule 0 0 * * *
+95 URL with port http://localhost:8080
+96 IPv4 with port 127.0.0.1:3000
+97 Error code ERR_CONNECTION_REFUSED
+98 HTTP status 404 Not Found
+99 HTTP status 500 Internal Server Error
+100 End of test data
