@@ -1,58 +1,18 @@
 [
     {
         "role": "user",
-        "content": "search for all files in the current directory and child directories which are of the file type .txt and filename starts with the letters ra"
+        "content": "list files in directories recursively"
     },
     {
         "role": "assistant",
-        "content": "find . -type f -name \"ra*.txt\""
+        "content": "COMMAND: ls -R\nCONFIDENCE: high\nWARNING: none"
     },
     {
         "role": "user",
-        "content": "search for all files that end in .py and display them in rows in alphabetical order"
+        "content": "give a command to look for all files named *.txt"
     },
     {
         "role": "assistant",
-        "content": "find . -type f -name \"*.py\" | sort"
-    },
-    {
-        "role": "user",
-        "content": "Please search for all files in the current directory that start with the word \"test\""
-    },
-    {
-        "role": "assistant",
-        "content": "find . -type f -name \"test*\""
-    },
-    {
-        "role": "user",
-        "content": "Search for all files that start with the word \"test\" -e"
-    },
-    {
-        "role": "assistant",
-        "content": "find . -type f -name \"test*\""
-    },
-    {
-        "role": "user",
-        "content": "List all files in current directory that start with the word \"test\""
-    },
-    {
-        "role": "assistant",
-        "content": "find . -type f -name \"test*\""
-    },
-    {
-        "role": "user",
-        "content": "Show all files in current directory that are of type .exe"
-    },
-    {
-        "role": "assistant",
-        "content": "find . -type f -name \"*.exe\""
-    },
-    {
-        "role": "user",
-        "content": "give me a command which will count how many lines of code we have inside all .py files within the src directory combined"
-    },
-    {
-        "role": "assistant",
-        "content": "find src -type f -name \"*.py\" | xargs wc -l"
+        "content": "COMMAND: find . -name \"*.txt\"\nCONFIDENCE: high\nWARNING: none"
     }
 ]
