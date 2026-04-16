@@ -15,7 +15,7 @@ def cli_loop(model=None, explain_flag=False):
         # Exit loop if user entered either exit or quit
         if user_input.lower() in ['exit', 'quit']:
             break
-            
+        
         if not user_input:
             continue
 
@@ -25,6 +25,7 @@ def cli_loop(model=None, explain_flag=False):
         
         if not result.success:
             ui.display_error(result.error)
+            print(f"DEBUG: The model actually said:\n{result.raw_output}")
             continue
             
         ui.display_command(result.command)
@@ -45,9 +46,10 @@ def cli_loop(model=None, explain_flag=False):
         confirm = input("\nRun command? (y/N): ").lower()
         if confirm == 'y':
             ui.display_status("Executing")
-            stdout, stderr = run_command(result.command)
-            if stdout: print(f"Output: {stdout}")
-            if stderr: print(f"Error: {stderr}")
+            return_code = run_command(result.command)
+
+            if return_code != 0:
+                print("Command Failed")
 
 if __name__ == "__main__":
     # Hand control to the CLI module for flag parsing

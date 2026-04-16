@@ -9,3 +9,5 @@ dependencies:
     - rich  # all terminal cosmatic things
     - typer
     - huggingface-hub
+    - requests
+    - clint

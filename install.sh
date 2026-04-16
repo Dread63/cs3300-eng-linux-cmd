@@ -8,3 +8,5 @@ What this script does:
 4. Creates the `en-linux` terminal command
 
 """
+
+!#/bin/bash
