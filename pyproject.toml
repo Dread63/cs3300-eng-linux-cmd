@@ -1,8 +1,12 @@
 [project]
 name = "eng-linux-cmd"
+version = "0.1.0"
 
 dependencies = [
     "ollama",
     "typer",
     "requests",
 ]
+
+[project.scripts]
+en-linux = "cli:run"

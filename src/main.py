@@ -1,16 +1,60 @@
+# =========================
+# HARD SILENCE MODE 
+# =========================
+
+# Comment this out if you are debugging 
+import os
+import sys
+import warnings
+
+# MUST be first: silence Python warnings
+warnings.filterwarnings("ignore")
+
+# HuggingFace + Transformers silence
+os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"
+os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
+os.environ["HF_HUB_DISABLE_PROGRESS_BARS"] = "1"
+os.environ["TRANSFORMERS_VERBOSITY"] = "error"
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
+# llama.cpp silence
+os.environ["GGML_LOG_LEVEL"] = "0"
+
+# Prevent HF logging system from printing early
+os.environ["HF_HUB_OFFLINE"] = "0"
+
+# HARD PIPE STDERR 
+class DevNull:
+    def write(self, *_): pass
+    def flush(self): pass
+
+sys.stderr = DevNull()
+sys.stdout = sys.stdout  # keep normal output
+
+# =========================
+# END OF HARD SILENCE MODE 
+# =========================
+
 import cli
 from ollama_client import ollama_client, llm
 from security import validate_command, run_command
 from explainer import CommandExplainer
 import terminal_ui as ui
 
-def cli_loop(model=None, explain_flag=False):
+def cli_loop(query=None, model=None, explain_flag=False):
     
     ui.display_welcome()
     explainer = CommandExplainer(llm)
 
+    first_iteration = True
+
     while True:
-        user_input = input("\nEnter English request (or 'exit'): ").strip()
+        if first_iteration and query:
+            user_input = query
+            first_iteration = False
+            print(f"\nInitial request: {user_input}")
+        else:
+            user_input = input("\nEnter English request (or 'exit'): ").strip()
 
         # Exit loop if user entered either exit or quit
         if user_input.lower() in ['exit', 'quit']:
@@ -49,7 +93,7 @@ def cli_loop(model=None, explain_flag=False):
             return_code = run_command(result.command)
 
             if return_code != 0:
-                print("Command Failed")
+                print(f"Command Failed with return code: {return_code}")
 
 if __name__ == "__main__":
     # Hand control to the CLI module for flag parsing
