@@ -1,6 +1,0 @@
-cli
-explainer
-main
-ollama_client
-security
-terminal_ui

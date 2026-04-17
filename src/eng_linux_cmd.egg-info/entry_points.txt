@@ -1,2 +1,0 @@
-[console_scripts]
-en-linux = cli:run

@@ -99,7 +99,6 @@ def _parse_response(raw: str) -> TranslationResult:
     )
 # --- End of translator.py logic ---
 
-# TODO: Fix library searching on macos
 def get_model_dir():
     system_name = platform.system()
 
@@ -145,8 +144,10 @@ llm = Llama(
     verbose=False
 )
 
+CHAT_HISTORY_PATH = os.path.join(MODEL_DIR, "chat_history.json")
+print(CHAT_HISTORY_PATH)
 class ChatSession:
-    def __init__(self, chat_history_file="src/chat_history.json"):
+    def __init__(self, chat_history_file=CHAT_HISTORY_PATH):
         self.chat_history_file = chat_history_file
         self.history = self.load_msg_history()
 
@@ -208,7 +209,7 @@ def ollama_client(llm_input) -> TranslationResult:
         "Now provide the command for the following request:"
     )
 
-    session = ChatSession(chat_history_file="src/chat_history.json")
+    session = ChatSession(chat_history_file=CHAT_HISTORY_PATH)
     session.add_msg_history("user", llm_input)
 
     messages = [{"role": "system", "content": llm_identity}] + session.history

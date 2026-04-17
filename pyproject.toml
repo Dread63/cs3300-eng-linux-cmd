@@ -3,10 +3,22 @@ name = "eng-linux-cmd"
 version = "0.1.0"
 
 dependencies = [
-    "ollama",
     "typer",
     "requests",
+    "rich",
+    "huggingface-hub",
+    "clint",
+    "llama-cpp-python",
 ]
+
+# Ensure build tools are present
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+# Handling src directory issue
+[tool.setuptools]
+package-dir = {"" = "src"}
 
 [project.scripts]
 en-linux = "cli:run"

@@ -1,3 +1,24 @@
+# IDEs and OS
 .idea/
 *.iml
 **/.DS_Store
+.vscode/
+
+# Python build and distribution
+build/
+dist/
+*.egg-info/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Environments
+.venv/
+env/
+venv/
+ENV/
+
+# Local data and secrets
+src/chat_history.json
+.env
