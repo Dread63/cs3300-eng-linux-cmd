@@ -1,4 +1,28 @@
-# Initial Setup
+# Installation
+
+### Option 1: Install from GitHub Release (Alpha)
+You can install the latest alpha release directly from GitHub:
+
+```bash
+pip install https://github.com/YourUsername/eng-linux-cmd/releases/download/v0.1.0a1/eng_linux_cmd-0.1.0a1-py3-none-any.whl
+```
+
+### Option 2: Install from Source (Editable Mode)
+If you want to contribute or test changes locally:
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/YourUsername/eng-linux-cmd.git
+   cd eng-linux-cmd
+   ```
+
+2. Install in editable mode:
+   ```bash
+   pip install -e .
+   ```
+
+# Development Setup
+### Initial Setup
 1) Clone the repo to you local device in whatever dev directory you usually use
 2) Install [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html) utilizing whichever method makes most sense for you specific hardware/OS
 3) Open a terminal and navigate to the project root directory, run `conda env create -f environment.yml`
