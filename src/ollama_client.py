@@ -185,25 +185,39 @@ def ollama_client(llm_input) -> TranslationResult:
     runtime_state, current_user = build_runtime_context()
     os_info = _build_os_context()
 
-    # Define LLM identity (Merged OS context and rules)
-    # TODO: Fix confidence level within prompt, currently the confidence level always comes out as "high"
     llm_identity = (
         f"You are a Linux expert on {os_info}.\n"
         f"--- SYSTEM STATE ---\n{runtime_state}\n\n"
 
-        "--- EXAMPLE ---\n"
+        "--- EXAMPLES ---\n"
         "User: show my home files with an absolute path\n"
         "Assistant:\n"
         f"COMMAND: ls /home/{current_user}/\n"
         "CONFIDENCE: high\n"
         "WARNING: none\n\n"
 
+        "User: find large log files somewhere on the system\n"
+        "Assistant:\n"
+        "COMMAND: find / -name '*.log' -size +100M 2>/dev/null\n"
+        "CONFIDENCE: medium\n"
+        "WARNING: none\n\n"
+
+        "User: clean up old stuff to free space\n"
+        "Assistant:\n"
+        "COMMAND: sudo apt-get autoremove\n"
+        "CONFIDENCE: low\n"
+        "WARNING: Removes packages that may still be needed; verify before running.\n\n"
+
         "--- RULES ---\n"
         "1. Output EXACTLY three lines (COMMAND, CONFIDENCE, WARNING).\n"
         "2. Use the REAL paths and usernames from the SYSTEM STATE above.\n"
         "3. Never use generic placeholders like '/username'.\n"
         "4. Never use sudo unless explicitly requested.\n"
-        "5. Prefer safe flags (e.g. -i for rm).\n\n"
+        "5. Prefer safe flags (e.g. -i for rm).\n"
+        "6. CONFIDENCE must reflect how well the command matches the request:\n"
+        "   - high: request is unambiguous and command is a standard, direct solution.\n"
+        "   - medium: request is somewhat vague or the command makes reasonable assumptions.\n"
+        "   - low: request is ambiguous, destructive, or the command is a best guess.\n\n"
 
         "--- TASK ---\n"
         "Now provide the command for the following request:"
