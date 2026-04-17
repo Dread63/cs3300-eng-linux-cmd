@@ -13,7 +13,7 @@ If you want to contribute or test changes locally:
 1. Clone the repository:
    ```bash
    git clone https://github.com/Dread63/cs3300-eng-linux-cmd.git
-   cd eng-linux-cmd
+   cd cs3300-eng-linux-cmd
    ```
 
 2. Install in editable mode:
