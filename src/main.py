@@ -8,27 +8,27 @@ import sys
 import warnings
 
 # MUST be first: silence Python warnings
-warnings.filterwarnings("ignore")
+# warnings.filterwarnings("ignore")
 
 # HuggingFace + Transformers silence
-os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"
-os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
-os.environ["HF_HUB_DISABLE_PROGRESS_BARS"] = "1"
-os.environ["TRANSFORMERS_VERBOSITY"] = "error"
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
+# os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"
+# os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
+# os.environ["HF_HUB_DISABLE_PROGRESS_BARS"] = "1"
+# os.environ["TRANSFORMERS_VERBOSITY"] = "error"
+# os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 # llama.cpp silence
-os.environ["GGML_LOG_LEVEL"] = "0"
+# os.environ["GGML_LOG_LEVEL"] = "0"
 
 # Prevent HF logging system from printing early
-os.environ["HF_HUB_OFFLINE"] = "0"
+# os.environ["HF_HUB_OFFLINE"] = "0"
 
 # HARD PIPE STDERR 
 class DevNull:
     def write(self, *_): pass
     def flush(self): pass
 
-sys.stderr = DevNull()
+# sys.stderr = DevNull()
 sys.stdout = sys.stdout  # keep normal output
 
 # =========================
@@ -39,11 +39,14 @@ import cli
 from ollama_client import ollama_client, llm
 from security import validate_command, run_command
 from explainer import CommandExplainer
-import terminal_ui as ui
+from terminal_ui import TerminalUI
 
 def cli_loop(query=None, model=None, explain_flag=False):
     
-    ui.display_welcome()
+    
+    ui = TerminalUI()
+    ui.show_banner()
+
     explainer = CommandExplainer(llm)
 
     first_iteration = True
@@ -54,7 +57,7 @@ def cli_loop(query=None, model=None, explain_flag=False):
             first_iteration = False
             print(f"\nInitial request: {user_input}")
         else:
-            user_input = input("\nEnter English request (or 'exit'): ").strip()
+            user_input = ui.get_query()
 
         # Exit loop if user entered either exit or quit
         if user_input.lower() in ['exit', 'quit']:
@@ -64,32 +67,32 @@ def cli_loop(query=None, model=None, explain_flag=False):
             continue
 
         # Generate the user command by running client
-        ui.display_status("Generating command")
         result = ollama_client(user_input)
         
         if not result.success:
-            ui.display_error(result.error)
+            ui.show_error(result.error)
             print(f"DEBUG: The model actually said:\n{result.raw_output}")
             continue
             
-        ui.display_command(result.command)
+        ui.show_command(result)
 
         # Explain command if flag is set
         if explain_flag:
             ui.display_status("Explaining")
             exp = explainer.explain(result.command)
             if exp.success:
-                ui.display_explanation(exp.summary, exp.breakdown, exp.warning)
+                ui.explaining_spinner()
+                ui.show_explanation(exp.summary, exp.breakdown, exp.warning)
 
         # Check security of command
         if not validate_command(result.command):
-            ui.display_error("Command rejected by security policy.")
+            ui.show_error("Command rejected by security policy.")
             continue
 
         # Execution of command if user selects yes
         confirm = input("\nRun command? (y/N): ").lower()
         if confirm == 'y':
-            ui.display_status("Executing")
+            ui.executing_spinner()
             return_code = run_command(result.command)
 
             if return_code != 0:
