@@ -22,3 +22,6 @@ ENV/
 # Local data and secrets
 src/chat_history.json
 .env
+CLAUDE.md
+.claude
+.claudeignore
