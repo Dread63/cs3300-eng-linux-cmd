@@ -4,7 +4,7 @@
 You can install the latest alpha release directly from GitHub:
 
 ```bash
-pip install https://github.com/YourUsername/eng-linux-cmd/releases/download/v0.1.0a1/eng_linux_cmd-0.1.0a1-py3-none-any.whl
+pip install https://github.com/Dread63/cs3300-eng-linux-cmd/releases/download/v0.1.0a1/eng_linux_cmd-0.1.0a1-py3-none-any.whl
 ```
 
 ### Option 2: Install from Source (Editable Mode)
@@ -12,7 +12,7 @@ If you want to contribute or test changes locally:
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/YourUsername/eng-linux-cmd.git
+   git clone https://github.com/Dread63/cs3300-eng-linux-cmd.git
    cd eng-linux-cmd
    ```
 
