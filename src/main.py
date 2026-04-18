@@ -41,8 +41,7 @@ from security import validate_command, run_command
 from explainer import CommandExplainer
 from terminal_ui import TerminalUI
 
-def cli_loop(query=None, model=None, explain_flag=False):
-    
+def cli_loop(query=None, model, explain_flag=False):
     
     ui = TerminalUI()
     ui.show_banner()
@@ -95,7 +94,9 @@ def cli_loop(query=None, model=None, explain_flag=False):
             ui.executing_spinner()
             return_code = run_command(result.command)
 
-            if return_code != 0:
+            if return_code == 1:
+                print("Command returned no results.")
+            elif return_code != 0:
                 print(f"Command Failed with return code: {return_code}")
 
 if __name__ == "__main__":

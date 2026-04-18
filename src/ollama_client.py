@@ -1,5 +1,6 @@
 from llama_cpp import Llama
 import os
+import sys
 import getpass # used to gather model context
 from datetime import datetime # used to gather model context
 import json
@@ -12,7 +13,8 @@ from clint.textui import progress
 MODEL_NAME = "qwen2.5-1.5b-instruct-q5_k_m.gguf"
 MODEL_DOWNLOAD_URL = "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/qwen2.5-1.5b-instruct-q5_k_m.gguf"
 #MODEL_FULL_PATH = os.path.join(MODEL_DIR, MODEL_NAME)
-MAX_MSG_RETENTION = 10
+MAX_MSG_RETENTION = 20
+MAX_HISTORY_TOKENS = 500  # tune this to adjust how much chat history the model sees
 
 #TODO: Implement error handling (try/catch blocks)
 
@@ -109,7 +111,13 @@ def get_model_dir():
     else:
         raise OSError(f"Unsupported operating system: {system_name}")
 
-MODEL_DIR = get_model_dir()
+# Get set model directory before creating full path
+try:
+    MODEL_DIR = get_model_dir()
+except OSError as e:
+    print(f"Error: {e}")
+    sys.exit(1)
+
 MODEL_FULL_PATH = os.path.join(MODEL_DIR, MODEL_NAME)
 
 # Download model on first run if file doesn't exist
@@ -120,29 +128,40 @@ if not os.path.exists(MODEL_FULL_PATH):
 
     os.makedirs(MODEL_DIR, exist_ok=True)
 
-    # Stream file download so we can write each chunk as they come through
-    with requests.get(MODEL_DOWNLOAD_URL, stream=True) as r:
+    try:
+        # Stream file download so we can write each chunk as they come through
+        with requests.get(MODEL_DOWNLOAD_URL, stream=True) as r:
 
-        # Used for error checking
-        r.raise_for_status()
+            # Used for error checking
+            r.raise_for_status()
 
-        with open(MODEL_FULL_PATH, 'wb') as f:
+            with open(MODEL_FULL_PATH, 'wb') as f:
 
-            total_file_length = int(r.headers.get('content-length'))
+                total_file_length = int(r.headers.get('content-length', 0))
 
-            # Download model in 8192 byte chunks and display progress bar (from clint library)
-            for chunk in progress.bar(r.iter_content(chunk_size=8192), expected_size=(total_file_length/8192 + 1)):
-                f.write(chunk)
-                f.flush()
+                # Download model in 8192 byte chunks and display progress bar (from clint library)
+                for chunk in progress.bar(r.iter_content(chunk_size=8192), expected_size=(total_file_length/8192 + 1)):
+                    f.write(chunk)
+                    f.flush()
+    except (requests.RequestException, OSError) as e:
+        if os.path.exists(MODEL_FULL_PATH):
+            # Remove the path if an error occured to ensure download on next run
+            os.remove(MODEL_FULL_PATH)
+        print(f"Download failed: {e}")
+        sys.exit(1)
 
 # Model initialization (User's Style)
-llm = Llama(
-    model_path=MODEL_FULL_PATH,
-    n_ctx = 2048,
-    n_threads = 4,
-    chat_format="chatml",
-    verbose=False
-)
+try:
+    llm = Llama(
+        model_path=MODEL_FULL_PATH,
+        n_ctx = 2048,
+        n_threads = 4,
+        chat_format="chatml",
+        verbose=False
+    )
+except Exception as e:
+    print(f"Failed to load model: {e}")
+    sys.exit(1)
 
 CHAT_HISTORY_PATH = os.path.join(MODEL_DIR, "chat_history.json")
 print(CHAT_HISTORY_PATH)
@@ -150,6 +169,7 @@ class ChatSession:
     def __init__(self, chat_history_file=CHAT_HISTORY_PATH):
         self.chat_history_file = chat_history_file
         self.history = self.load_msg_history()
+        self.total_tokens = 0
 
     def load_msg_history(self):
         if os.path.exists(self.chat_history_file):
@@ -171,12 +191,38 @@ class ChatSession:
         self.history.append({"role": role, "content": msg_content})
         self.save_msg_history()
 
-    # Remove oldest message if history reaches greater than 10 messages in order to remain in 2048 context window
-    # TODO: Update this to prune based on token size not number of messages
+    # Determine the number of tokens history is currently taking up in order to make a decision regarding pruning
+    def count_history_tokens(self):
+        
+        self.total_tokens = 0
+
+        for json_entry in self.history:
+
+            try:
+                tokens = llm.tokenize(json_entry["content"].encode("utf-8"))
+            except (UnicodeEncodeError, ValueError):
+                tokens = []
+            n_tokens = len(tokens)
+            self.total_tokens += n_tokens
+
+            # DEBUG
+            print(f"[DEBUG] role={json_entry['role']!r:12} tokens={n_tokens:4d}  content={json_entry['content'][:60]!r}")
+
+        print(f"[DEBUG] total history tokens: {self.total_tokens} / {MAX_HISTORY_TOKENS}")
+
+    # Prune oldest message data from history if exceeding max token threshold. Fallback for max msg retention
     def prune_msg_history(self):
+
+        self.count_history_tokens()
+
+        while self.total_tokens > MAX_HISTORY_TOKENS:
+
+            self.history.pop(0)
+            self.count_history_tokens()
 
         if len(self.history) > MAX_MSG_RETENTION:
             self.history = self.history[-MAX_MSG_RETENTION:]
+            self.count_history_tokens()
         self.save_msg_history()
 
 # Used to build message using context helper functions and message history, then pass to the model to process
@@ -231,12 +277,16 @@ def ollama_client(llm_input) -> TranslationResult:
     # After adding users message to history, cut the oldest off
     session.prune_msg_history()
 
-    response = llm.create_chat_completion(
-        messages=messages,
-        temperature=0.15 # From translator.py for precision
-    )
-
-    llm_reply = response["choices"][0]["message"]["content"]
+    try:
+        response = llm.create_chat_completion(
+            messages=messages,
+            temperature=0.15 # From translator.py for precision
+        )
+        llm_reply = response["choices"][0]["message"]["content"]
+    except (KeyError, IndexError) as e:
+        return TranslationResult("", "low", "", False, f"Unexpected model response format: {e}")
+    except Exception as e:
+        return TranslationResult("", "low", "", False, f"Model inference failed: {e}")
     
     # Parse the response using the methodical logic from translator.py
     result = _parse_response(llm_reply)
