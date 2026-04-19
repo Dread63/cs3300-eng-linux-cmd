@@ -36,13 +36,15 @@ sys.stdout = sys.stdout  # keep normal output
 # =========================
 
 import cli
-from ollama_client import ollama_client, llm
+from ollama_client import ollama_client, initialize
 from security import validate_command, run_command
 from explainer import CommandExplainer
 from terminal_ui import TerminalUI
 
-def cli_loop(query=None, model, explain_flag=False):
-    
+def cli_loop(query=None, model=None, explain_flag=False):
+
+    llm = initialize(model_flag=model)
+
     ui = TerminalUI()
     ui.show_banner()
 

@@ -10,13 +10,20 @@ import requests
 from clint.textui import progress
 
 #MODEL_DIR = os.path.expanduser("~/.local/share/eng-linux-cmd/")
-MODEL_NAME = "qwen2.5-1.5b-instruct-q5_k_m.gguf"
-MODEL_DOWNLOAD_URL = "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/qwen2.5-1.5b-instruct-q5_k_m.gguf"
+#MODEL_NAME = "qwen2.5-1.5b-instruct-q5_k_m.gguf"
+#MODEL_DOWNLOAD_URL = "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/qwen2.5-1.5b-instruct-q5_k_m.gguf"
 #MODEL_FULL_PATH = os.path.join(MODEL_DIR, MODEL_NAME)
 MAX_MSG_RETENTION = 20
 MAX_HISTORY_TOKENS = 500  # tune this to adjust how much chat history the model sees
 
-#TODO: Implement error handling (try/catch blocks)
+MODELS = {
+
+    "qwen2.5-1.5b": {
+        "name": "qwen2.5-1.5b-instruct-q5_k_m.gguf",
+        "url": "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/qwen2.5-1.5b-instruct-q5_k_m.gguf",
+        "description": "Quick and reliable",
+    }
+}
 
 # From translator.py
 @dataclass
@@ -118,53 +125,124 @@ except OSError as e:
     print(f"Error: {e}")
     sys.exit(1)
 
-MODEL_FULL_PATH = os.path.join(MODEL_DIR, MODEL_NAME)
+CONFIG_PATH = os.path.join(MODEL_DIR, "config.json")
+CHAT_HISTORY_PATH = os.path.join(MODEL_DIR, "chat_history.json")
 
-# Download model on first run if file doesn't exist
-if not os.path.exists(MODEL_FULL_PATH):
-    
-    print("Model not installed. Downloading now...")
-    print(f"Installing {MODEL_NAME}:")
+# Module-level globals set by initialize()
+llm = None
 
-    os.makedirs(MODEL_DIR, exist_ok=True)
+def load_config() -> str | None:
+
+    if os.path.exists(CONFIG_PATH): 
+        try:
+            with open(CONFIG_PATH, "r") as config_file:
+                return json.load(config_file).get("model")
+        except (json.JSONDecodeError, IOError):
+                return None
+    else:
+        return None
+
+def save_config(model_key: str):
 
     try:
-        # Stream file download so we can write each chunk as they come through
-        with requests.get(MODEL_DOWNLOAD_URL, stream=True) as r:
+        with open(CONFIG_PATH, "w") as config_file:
+            json.dump({"model": model_key}, config_file, indent=4)
+    except IOError as e:
+        print(f"Failed to save config data {e}")
+   
+def prompt_model_selection() -> str:
+    
+    print("-----------MODELS----------")
+    for i, key in enumerate(MODELS, 1):
+        print(f"{i}. {key} - {MODELS[key]['description']}")
+    print("Please enter name of desired model")
 
-            # Used for error checking
-            r.raise_for_status()
+    model_matched = False
 
-            with open(MODEL_FULL_PATH, 'wb') as f:
+    while model_matched == False:
+        
+        user_input = input("\nSelect a Model: ").strip()
 
-                total_file_length = int(r.headers.get('content-length', 0))
+        if user_input in MODELS:
+            model_matched = True
 
-                # Download model in 8192 byte chunks and display progress bar (from clint library)
-                for chunk in progress.bar(r.iter_content(chunk_size=8192), expected_size=(total_file_length/8192 + 1)):
-                    f.write(chunk)
-                    f.flush()
-    except (requests.RequestException, OSError) as e:
-        if os.path.exists(MODEL_FULL_PATH):
-            # Remove the path if an error occured to ensure download on next run
-            os.remove(MODEL_FULL_PATH)
-        print(f"Download failed: {e}")
+        else:
+            print(f"Invalid Selection, model {user_input} not in database")
+
+    return user_input
+    
+def resolve_model(model_flag: str | None) -> str:
+
+    if model_flag:
+        if model_flag not in MODELS:
+            print(f"Unknown model '{model_flag}'. Available: {', '.join(MODELS.keys())}")
+            sys.exit(1)
+        save_config(model_flag)
+        return model_flag
+
+    saved = load_config()
+    if saved and saved in MODELS:
+        return saved
+
+    key = prompt_model_selection()
+    save_config(key)
+    return key
+
+def download_model(model_full_path: str, model_key: str):
+    
+    if not os.path.exists(model_full_path):
+    
+        print("Model not installed. Downloading now...")
+        print(f"Installing: {MODELS[model_key]['name']}")
+
+        os.makedirs(MODEL_DIR, exist_ok=True)
+
+        try:
+            # Stream file download so we can write each chunk as they come through
+            with requests.get(MODELS[model_key]['url'], stream=True) as r:
+
+                # Used for error checking
+                r.raise_for_status()
+
+                with open(model_full_path, 'wb') as f:
+
+                    total_file_length = int(r.headers.get('content-length', 0))
+
+                    # Download model in 8192 byte chunks and display progress bar (from clint library)
+                    for chunk in progress.bar(r.iter_content(chunk_size=8192), expected_size=(total_file_length/8192 + 1)):
+                        f.write(chunk)
+                        f.flush()
+
+        except (requests.RequestException, OSError) as e:
+            if os.path.exists(model_full_path):
+                # Remove the path if an error occured to ensure download on next run
+                os.remove(model_full_path)
+            print(f"Download failed: {e}")
+            sys.exit(1)
+
+def initialize(model_flag: str | None = None) -> Llama:
+    global llm
+
+    model_key = resolve_model(model_flag)
+    model_full_path = os.path.join(MODEL_DIR, MODELS[model_key]["name"])
+
+    download_model(model_full_path, model_key)
+
+    # Model initialization (User's Style)
+    try:
+        llm = Llama(
+            model_path=model_full_path,
+            n_ctx=2048,
+            n_threads=4,
+            chat_format="chatml",
+            verbose=False
+        )
+    except Exception as e:
+        print(f"Failed to load model: {e}")
         sys.exit(1)
 
-# Model initialization (User's Style)
-try:
-    llm = Llama(
-        model_path=MODEL_FULL_PATH,
-        n_ctx = 2048,
-        n_threads = 4,
-        chat_format="chatml",
-        verbose=False
-    )
-except Exception as e:
-    print(f"Failed to load model: {e}")
-    sys.exit(1)
+    return llm
 
-CHAT_HISTORY_PATH = os.path.join(MODEL_DIR, "chat_history.json")
-print(CHAT_HISTORY_PATH)
 class ChatSession:
     def __init__(self, chat_history_file=CHAT_HISTORY_PATH):
         self.chat_history_file = chat_history_file
