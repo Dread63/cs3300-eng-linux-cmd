@@ -27,9 +27,8 @@ class CommandExplainer:
     _BREAKDOWN_TAG = "BREAKDOWN:"
     _WARNING_TAG   = "WARNING:"
 
-    def __init__(self, llm, temperature: float = 0.3):
+    def __init__(self, llm):
         self._llm = llm
-        self.temperature = temperature
 
     def explain(self, command: str) -> ExplanationResult:
         """
@@ -59,7 +58,8 @@ class CommandExplainer:
                     {"role": "system", "content": system_text},
                     {"role": "user", "content": f"Explain this command: {command}"}
                 ],
-                temperature=self.temperature,
+                temperature=0.3,
+                max_tokens=250,
             )
             raw = response["choices"][0]["message"]["content"].strip()
         except Exception as exc:
@@ -71,7 +71,7 @@ class CommandExplainer:
         """
         Parse the structured model output into an ExplanationResult.
         """
-        summary = breakdown = warning = ""
+        summary = warning = ""
         bullets: list[str] = []
 
         # Pull out SUMMARY
