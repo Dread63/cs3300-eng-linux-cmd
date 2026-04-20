@@ -1,5 +1,6 @@
 from llama_cpp import Llama
 import os
+import sys
 import getpass # used to gather model context
 from datetime import datetime # used to gather model context
 import json
@@ -8,15 +9,73 @@ from dataclasses import dataclass # from translator.py
 import requests
 from clint.textui import progress
 
-#MODEL_DIR = os.path.expanduser("~/.local/share/eng-linux-cmd/")
-MODEL_NAME = "qwen2.5-1.5b-instruct-q5_k_m.gguf"
-MODEL_DOWNLOAD_URL = "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/qwen2.5-1.5b-instruct-q5_k_m.gguf"
-#MODEL_FULL_PATH = os.path.join(MODEL_DIR, MODEL_NAME)
-MAX_MSG_RETENTION = 10
+MAX_MSG_RETENTION = 20
+MAX_HISTORY_TOKENS = 500  # tune this to adjust how much chat history the model sees
 
-#TODO: Implement error handling (try/catch blocks)
+MODELS = {
 
-# From translator.py
+    "qwen2.5-0.5b": {
+        "name" : "qwen2.5-0.5b-instruct-q4_k_m.gguf",
+        "url" : "https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q4_k_m.gguf?download=true",
+        "description": (
+            "Qwen2.5-0.5B-Instruct is the smallest model in the Qwen2.5 series, with 0.49 billion "
+            "parameters and a non-embedding parameter count of just 0.36 billion. Despite its compact "
+            "size, it benefits from the same improvements as the wider Qwen2.5 family, including "
+            "enhanced instruction following, structured output generation, and resilience to diverse "
+            "system prompts. It supports a context length of up to 32K tokens and can generate up to "
+            "8K tokens, making it well-suited for lightweight deployments where speed and low resource "
+            "usage are the priority."
+        ),
+    },
+
+    "qwen2.5-1.5b": {
+        "name": "qwen2.5-1.5b-instruct-q5_k_m.gguf",
+        "url": "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/qwen2.5-1.5b-instruct-q5_k_m.gguf",
+        "description": (
+            "Qwen2.5 is the latest series of Qwen large language models, available in sizes "
+            "ranging from 0.5 to 72 billion parameters. It brings significant improvements in "
+            "knowledge, coding, and mathematics, as well as instruction following, long text "
+            "generation (over 8K tokens), and understanding structured data such as tables. "
+            "Qwen2.5 supports long-context inputs up to 128K tokens, can generate up to 8K tokens, "
+            "and is resilient to diverse system prompts making it well-suited for role-play and "
+            "chatbot applications. It also offers multilingual support for over 29 languages "
+            "including Chinese, English, French, Spanish, Portuguese, German, Italian, Russian, "
+            "Japanese, Korean, Vietnamese, Thai, and Arabic."
+        ),
+    },
+
+    "gemma-2b": {
+        "name": "gemma-2b-it.gguf",
+        "url": "https://huggingface.co/lmstudio-community/gemma-2-2b-it-GGUF/resolve/main/gemma-2-2b-it-Q4_K_M.gguf?download=true",
+        "description": (
+            "Gemma is a family of lightweight, state-of-the-art open models from Google, "
+            "built from the same research and technology used to create the Gemini models. "
+            "They are text-to-text, decoder-only large language models, available in English, "
+            "with open weights, pre-trained variants, and instruction-tuned variants. "
+            "Gemma models are well-suited for a variety of text generation tasks, including "
+            "question answering, summarization, and reasoning. Their relatively small size "
+            "makes it possible to deploy them in environments with limited resources such as "
+            "a laptop, desktop or your own cloud infrastructure, democratizing access to "
+            "state of the art AI models and helping foster innovation for everyone."
+        )
+    },
+
+    "deepseek-coder-1.3b": {
+        "name" : "deepseek-coder-1.3b-instruct.Q4_K_M.gguf",
+        "url" : "https://huggingface.co/TheBloke/deepseek-coder-1.3b-instruct-GGUF/resolve/main/deepseek-coder-1.3b-instruct.Q4_K_M.gguf?download=true",
+        "description": (
+            "DeepSeek Coder is a series of code language models trained from scratch on 2 trillion tokens, "
+            "with a composition of 87% code and 13% natural language in both English and Chinese. "
+            "The 1.3B instruct model is fine-tuned on 2B tokens of instruction data, making it well-suited "
+            "for code generation, completion, and infilling tasks. It supports a 16K context window and "
+            "achieves state-of-the-art performance among open-source code models on benchmarks including "
+            "HumanEval, MultiPL-E, MBPP, DS-1000, and APPS across multiple programming languages. "
+            "Despite its small size, it is capable of project-level code completion and supports "
+            "commercial use under the DeepSeek Model License."
+        ),
+    }
+}
+
 @dataclass
 class TranslationResult:
     command: str       # The Linux command
@@ -40,9 +99,8 @@ def _build_os_context() -> str:
         return platform.system()
     
 # Used to gather information on current runtime such as current directory, user information, and date/time
-def build_runtime_context() -> str:
+def _build_runtime_context() -> tuple[str, str]:
 
-  
     # Get basics on user information and current directory
     current_dir = os.getcwd()
     user = getpass.getuser()
@@ -97,9 +155,9 @@ def _parse_response(raw: str) -> TranslationResult:
         success=True,
         warning=warning,
     )
-# --- End of translator.py logic ---
 
-def get_model_dir():
+# Find installation directory of model based on system OS
+def _get_model_dir():
     system_name = platform.system()
 
     if system_name == "Darwin":
@@ -107,49 +165,146 @@ def get_model_dir():
     elif system_name == "Linux":
         return os.path.expanduser("~/.local/share/eng-linux-cmd")
     else:
+        # WINDOWS NOT CURRENTLY SUPPORTED
         raise OSError(f"Unsupported operating system: {system_name}")
 
-MODEL_DIR = get_model_dir()
-MODEL_FULL_PATH = os.path.join(MODEL_DIR, MODEL_NAME)
+# Get set model directory before creating full path
+try:
+    MODEL_DIR = _get_model_dir()
+except OSError as e:
+    print(f"Error: {e}")
+    sys.exit(1)
 
-# Download model on first run if file doesn't exist
-if not os.path.exists(MODEL_FULL_PATH):
-    
-    print("Model not installed. Downloading now...")
-    print(f"Installing {MODEL_NAME}:")
-
-    os.makedirs(MODEL_DIR, exist_ok=True)
-
-    # Stream file download so we can write each chunk as they come through
-    with requests.get(MODEL_DOWNLOAD_URL, stream=True) as r:
-
-        # Used for error checking
-        r.raise_for_status()
-
-        with open(MODEL_FULL_PATH, 'wb') as f:
-
-            total_file_length = int(r.headers.get('content-length'))
-
-            # Download model in 8192 byte chunks and display progress bar (from clint library)
-            for chunk in progress.bar(r.iter_content(chunk_size=8192), expected_size=(total_file_length/8192 + 1)):
-                f.write(chunk)
-                f.flush()
-
-# Model initialization (User's Style)
-llm = Llama(
-    model_path=MODEL_FULL_PATH,
-    n_ctx = 2048,
-    n_threads = 4,
-    chat_format="chatml",
-    verbose=False
-)
-
+CONFIG_PATH = os.path.join(MODEL_DIR, "config.json")
 CHAT_HISTORY_PATH = os.path.join(MODEL_DIR, "chat_history.json")
-print(CHAT_HISTORY_PATH)
+
+# Module-level globals set by initialize()
+_llm = None
+_session = None
+
+def load_config() -> str | None:
+
+    if os.path.exists(CONFIG_PATH): 
+        try:
+            with open(CONFIG_PATH, "r") as config_file:
+                return json.load(config_file).get("model")
+        except (json.JSONDecodeError, IOError):
+                return None
+    else:
+        return None
+
+def save_config(model_key: str):
+
+    try:
+        with open(CONFIG_PATH, "w") as config_file:
+            json.dump({"model": model_key}, config_file, indent=4)
+    except IOError as e:
+        print(f"Failed to save config data {e}")
+   
+def prompt_model_selection() -> str:
+    
+    print("-----------MODELS----------")
+    for i, key in enumerate(MODELS, 1):
+        print(f"{i}. {key} - {MODELS[key]['description']}")
+    print("Please enter name of desired model")
+
+    model_matched = False
+
+    while model_matched == False:
+        
+        user_input = input("\nSelect a Model: ").strip()
+
+        if user_input in MODELS:
+            model_matched = True
+
+        else:
+            print(f"Invalid Selection, model {user_input} not in database")
+
+    return user_input
+    
+def resolve_model(model_flag: str | None) -> str:
+
+    if model_flag:
+        if model_flag not in MODELS:
+            print(f"Unknown model '{model_flag}'. Available: {', '.join(MODELS.keys())}")
+            sys.exit(1)
+        save_config(model_flag)
+        return model_flag
+
+    saved = load_config()
+    if saved and saved in MODELS:
+        return saved
+
+    key = prompt_model_selection()
+    save_config(key)
+    return key
+
+def download_model(model_full_path: str, model_key: str):
+    
+    if not os.path.exists(model_full_path):
+    
+        print("Model not installed. Downloading now...")
+        print(f"Installing: {MODELS[model_key]['name']}")
+
+        os.makedirs(MODEL_DIR, exist_ok=True)
+
+        try:
+            # Stream file download so we can write each chunk as they come through
+            with requests.get(MODELS[model_key]['url'], stream=True) as r:
+
+                # Used for error checking
+                r.raise_for_status()
+
+                with open(model_full_path, 'wb') as f:
+
+                    total_file_length = int(r.headers.get('content-length', 0))
+
+                    # Download model in 8192 byte chunks and display progress bar (from clint library)
+                    for chunk in progress.bar(r.iter_content(chunk_size=8192), expected_size=(total_file_length/8192 + 1)):
+                        f.write(chunk)
+                        f.flush()
+
+        except (requests.RequestException, OSError) as e:
+            if os.path.exists(model_full_path):
+                # Remove the path if an error occured to ensure download on next run
+                os.remove(model_full_path)
+            print(f"Download failed: {e}")
+            sys.exit(1)
+
+def initialize(model_flag: str | None = None) -> Llama:
+
+    """ Used to instantiate the model object, download the selected model, and instantiate a chat session
+    _llm -> Llama : model object
+    _session -> ChatSession : class to store chat history data for maintained context (passed to model on each request)
+    """
+
+    global _llm, _session
+
+    model_key = resolve_model(model_flag)
+    model_full_path = os.path.join(MODEL_DIR, MODELS[model_key]["name"])
+
+    download_model(model_full_path, model_key)
+
+    try:
+        _llm = Llama(
+            model_path=model_full_path,
+            n_ctx=2048,
+            n_threads=4,
+            chat_format="chatml",
+            verbose=False
+        )
+    except Exception as e:
+        print(f"Failed to load model: {e}")
+        sys.exit(1)
+
+    _session = ChatSession(chat_history_file=CHAT_HISTORY_PATH)
+    return _llm
+
 class ChatSession:
     def __init__(self, chat_history_file=CHAT_HISTORY_PATH):
         self.chat_history_file = chat_history_file
         self.history = self.load_msg_history()
+        self.total_tokens = 0
 
     def load_msg_history(self):
         if os.path.exists(self.chat_history_file):
@@ -171,21 +326,38 @@ class ChatSession:
         self.history.append({"role": role, "content": msg_content})
         self.save_msg_history()
 
-    # Remove oldest message if history reaches greater than 10 messages in order to remain in 2048 context window
-    # TODO: Update this to prune based on token size not number of messages
+    def count_history_tokens(self):
+        self.total_tokens = 0
+
+        for json_entry in self.history:
+            try:
+                tokens = _llm.tokenize(json_entry["content"].encode("utf-8"))
+            except (UnicodeEncodeError, ValueError):
+                tokens = []
+            self.total_tokens += len(tokens)
+
+    # Prune oldest message data from history if exceeding max token threshold. Fallback for max msg retention
     def prune_msg_history(self):
+
+        self.count_history_tokens()
+
+        while self.total_tokens > MAX_HISTORY_TOKENS:
+
+            self.history.pop(0)
+            self.count_history_tokens()
 
         if len(self.history) > MAX_MSG_RETENTION:
             self.history = self.history[-MAX_MSG_RETENTION:]
+            self.count_history_tokens()
         self.save_msg_history()
 
 # Used to build message using context helper functions and message history, then pass to the model to process
-def ollama_client(llm_input) -> TranslationResult:
-    
-    runtime_state, current_user = build_runtime_context()
+def ollama_client(user_input) -> TranslationResult:
+
+    runtime_state, current_user = _build_runtime_context()
     os_info = _build_os_context()
 
-    llm_identity = (
+    system_prompt = (
         f"You are a Linux expert on {os_info}.\n"
         f"--- SYSTEM STATE ---\n{runtime_state}\n\n"
 
@@ -223,25 +395,25 @@ def ollama_client(llm_input) -> TranslationResult:
         "Now provide the command for the following request:"
     )
 
-    session = ChatSession(chat_history_file=CHAT_HISTORY_PATH)
-    session.add_msg_history("user", llm_input)
+    _session.add_msg_history("user", user_input)
 
-    messages = [{"role": "system", "content": llm_identity}] + session.history
+    messages = [{"role": "system", "content": system_prompt}] + _session.history
 
-    # After adding users message to history, cut the oldest off
-    session.prune_msg_history()
+    _session.prune_msg_history()
 
-    response = llm.create_chat_completion(
-        messages=messages,
-        temperature=0.15 # From translator.py for precision
-    )
+    try:
+        response = _llm.create_chat_completion(
+            messages=messages,
+            temperature=0.15,
+            max_tokens=150,
+        )
+        reply = response["choices"][0]["message"]["content"]
+    except (KeyError, IndexError) as e:
+        return TranslationResult("", "low", "", False, f"Unexpected model response format: {e}")
+    except Exception as e:
+        return TranslationResult("", "low", "", False, f"Model inference failed: {e}")
 
-    llm_reply = response["choices"][0]["message"]["content"]
-    
-    # Parse the response using the methodical logic from translator.py
-    result = _parse_response(llm_reply)
-    
-    # Still add the full reply to history for context
-    session.add_msg_history("assistant", llm_reply)
+    result = _parse_response(reply)
+    _session.add_msg_history("assistant", reply)
 
     return result

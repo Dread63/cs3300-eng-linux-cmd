@@ -1,10 +1,10 @@
 # Installation
 
-### Option 1: Install from GitHub Release (Alpha)
+### Option 1: Install from GitHub Release
 You can install the latest alpha release directly from GitHub:
 
 ```bash
-pip install https://github.com/Dread63/cs3300-eng-linux-cmd/releases/download/Alpha-release-1-Pip-install-working/eng_linux_cmd-0.1.0a1-py3-none-any.whl
+pip install https://github.com/Dread63/cs3300-eng-linux-cmd/releases/download/release-v.0.1.0/eng_linux_cmd-0.1.0-py3-none-any.whl
 ```
 
 ### Option 2: Install from Source (Editable Mode)
