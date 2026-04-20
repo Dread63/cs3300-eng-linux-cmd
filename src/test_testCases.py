@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # test_testCases - Template for adding your own test cases
 
-import sys
-import os
-import re
+import sys #Need to have the system
+import os #Need the os
+import re #
 from difflib import SequenceMatcher
 
 # Add current directory to path
