@@ -1,6 +1,6 @@
 # Installation
 
-### Option 1: Install from GitHub Release (Alpha)
+### Option 1: Install from GitHub Release
 You can install the latest alpha release directly from GitHub:
 
 ```bash
