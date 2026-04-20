@@ -9,23 +9,73 @@ from dataclasses import dataclass # from translator.py
 import requests
 from clint.textui import progress
 
-#MODEL_DIR = os.path.expanduser("~/.local/share/eng-linux-cmd/")
-#MODEL_NAME = "qwen2.5-1.5b-instruct-q5_k_m.gguf"
-#MODEL_DOWNLOAD_URL = "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/qwen2.5-1.5b-instruct-q5_k_m.gguf"
-#MODEL_FULL_PATH = os.path.join(MODEL_DIR, MODEL_NAME)
 MAX_MSG_RETENTION = 20
 MAX_HISTORY_TOKENS = 500  # tune this to adjust how much chat history the model sees
 
 MODELS = {
 
+    "qwen2.5-0.5b": {
+        "name" : "qwen2.5-0.5b-instruct-q4_k_m.gguf",
+        "url" : "https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q4_k_m.gguf?download=true",
+        "description": (
+            "Qwen2.5-0.5B-Instruct is the smallest model in the Qwen2.5 series, with 0.49 billion "
+            "parameters and a non-embedding parameter count of just 0.36 billion. Despite its compact "
+            "size, it benefits from the same improvements as the wider Qwen2.5 family, including "
+            "enhanced instruction following, structured output generation, and resilience to diverse "
+            "system prompts. It supports a context length of up to 32K tokens and can generate up to "
+            "8K tokens, making it well-suited for lightweight deployments where speed and low resource "
+            "usage are the priority."
+        ),
+    },
+
     "qwen2.5-1.5b": {
         "name": "qwen2.5-1.5b-instruct-q5_k_m.gguf",
         "url": "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/qwen2.5-1.5b-instruct-q5_k_m.gguf",
-        "description": "Quick and reliable",
+        "description": (
+            "Qwen2.5 is the latest series of Qwen large language models, available in sizes "
+            "ranging from 0.5 to 72 billion parameters. It brings significant improvements in "
+            "knowledge, coding, and mathematics, as well as instruction following, long text "
+            "generation (over 8K tokens), and understanding structured data such as tables. "
+            "Qwen2.5 supports long-context inputs up to 128K tokens, can generate up to 8K tokens, "
+            "and is resilient to diverse system prompts making it well-suited for role-play and "
+            "chatbot applications. It also offers multilingual support for over 29 languages "
+            "including Chinese, English, French, Spanish, Portuguese, German, Italian, Russian, "
+            "Japanese, Korean, Vietnamese, Thai, and Arabic."
+        ),
+    },
+
+    "gemma-2b": {
+        "name": "gemma-2b-it.gguf",
+        "url": "https://huggingface.co/lmstudio-community/gemma-2-2b-it-GGUF/resolve/main/gemma-2-2b-it-Q4_K_M.gguf?download=true",
+        "description": (
+            "Gemma is a family of lightweight, state-of-the-art open models from Google, "
+            "built from the same research and technology used to create the Gemini models. "
+            "They are text-to-text, decoder-only large language models, available in English, "
+            "with open weights, pre-trained variants, and instruction-tuned variants. "
+            "Gemma models are well-suited for a variety of text generation tasks, including "
+            "question answering, summarization, and reasoning. Their relatively small size "
+            "makes it possible to deploy them in environments with limited resources such as "
+            "a laptop, desktop or your own cloud infrastructure, democratizing access to "
+            "state of the art AI models and helping foster innovation for everyone."
+        )
+    },
+
+    "deepseek-coder-1.3b": {
+        "name" : "deepseek-coder-1.3b-instruct.Q4_K_M.gguf",
+        "url" : "https://huggingface.co/TheBloke/deepseek-coder-1.3b-instruct-GGUF/resolve/main/deepseek-coder-1.3b-instruct.Q4_K_M.gguf?download=true",
+        "description": (
+            "DeepSeek Coder is a series of code language models trained from scratch on 2 trillion tokens, "
+            "with a composition of 87% code and 13% natural language in both English and Chinese. "
+            "The 1.3B instruct model is fine-tuned on 2B tokens of instruction data, making it well-suited "
+            "for code generation, completion, and infilling tasks. It supports a 16K context window and "
+            "achieves state-of-the-art performance among open-source code models on benchmarks including "
+            "HumanEval, MultiPL-E, MBPP, DS-1000, and APPS across multiple programming languages. "
+            "Despite its small size, it is capable of project-level code completion and supports "
+            "commercial use under the DeepSeek Model License."
+        ),
     }
 }
 
-# From translator.py
 @dataclass
 class TranslationResult:
     command: str       # The Linux command
@@ -49,9 +99,8 @@ def _build_os_context() -> str:
         return platform.system()
     
 # Used to gather information on current runtime such as current directory, user information, and date/time
-def build_runtime_context() -> str:
+def _build_runtime_context() -> tuple[str, str]:
 
-  
     # Get basics on user information and current directory
     current_dir = os.getcwd()
     user = getpass.getuser()
@@ -106,9 +155,9 @@ def _parse_response(raw: str) -> TranslationResult:
         success=True,
         warning=warning,
     )
-# --- End of translator.py logic ---
 
-def get_model_dir():
+# Find installation directory of model based on system OS
+def _get_model_dir():
     system_name = platform.system()
 
     if system_name == "Darwin":
@@ -116,11 +165,12 @@ def get_model_dir():
     elif system_name == "Linux":
         return os.path.expanduser("~/.local/share/eng-linux-cmd")
     else:
+        # WINDOWS NOT CURRENTLY SUPPORTED
         raise OSError(f"Unsupported operating system: {system_name}")
 
 # Get set model directory before creating full path
 try:
-    MODEL_DIR = get_model_dir()
+    MODEL_DIR = _get_model_dir()
 except OSError as e:
     print(f"Error: {e}")
     sys.exit(1)
@@ -129,7 +179,8 @@ CONFIG_PATH = os.path.join(MODEL_DIR, "config.json")
 CHAT_HISTORY_PATH = os.path.join(MODEL_DIR, "chat_history.json")
 
 # Module-level globals set by initialize()
-llm = None
+_llm = None
+_session = None
 
 def load_config() -> str | None:
 
@@ -221,16 +272,21 @@ def download_model(model_full_path: str, model_key: str):
             sys.exit(1)
 
 def initialize(model_flag: str | None = None) -> Llama:
-    global llm
+
+    """ Used to instantiate the model object, download the selected model, and instantiate a chat session
+    _llm -> Llama : model object
+    _session -> ChatSession : class to store chat history data for maintained context (passed to model on each request)
+    """
+
+    global _llm, _session
 
     model_key = resolve_model(model_flag)
     model_full_path = os.path.join(MODEL_DIR, MODELS[model_key]["name"])
 
     download_model(model_full_path, model_key)
 
-    # Model initialization (User's Style)
     try:
-        llm = Llama(
+        _llm = Llama(
             model_path=model_full_path,
             n_ctx=2048,
             n_threads=4,
@@ -241,7 +297,8 @@ def initialize(model_flag: str | None = None) -> Llama:
         print(f"Failed to load model: {e}")
         sys.exit(1)
 
-    return llm
+    _session = ChatSession(chat_history_file=CHAT_HISTORY_PATH)
+    return _llm
 
 class ChatSession:
     def __init__(self, chat_history_file=CHAT_HISTORY_PATH):
@@ -269,24 +326,15 @@ class ChatSession:
         self.history.append({"role": role, "content": msg_content})
         self.save_msg_history()
 
-    # Determine the number of tokens history is currently taking up in order to make a decision regarding pruning
     def count_history_tokens(self):
-        
         self.total_tokens = 0
 
         for json_entry in self.history:
-
             try:
-                tokens = llm.tokenize(json_entry["content"].encode("utf-8"))
+                tokens = _llm.tokenize(json_entry["content"].encode("utf-8"))
             except (UnicodeEncodeError, ValueError):
                 tokens = []
-            n_tokens = len(tokens)
-            self.total_tokens += n_tokens
-
-            # DEBUG
-            print(f"[DEBUG] role={json_entry['role']!r:12} tokens={n_tokens:4d}  content={json_entry['content'][:60]!r}")
-
-        print(f"[DEBUG] total history tokens: {self.total_tokens} / {MAX_HISTORY_TOKENS}")
+            self.total_tokens += len(tokens)
 
     # Prune oldest message data from history if exceeding max token threshold. Fallback for max msg retention
     def prune_msg_history(self):
@@ -304,12 +352,12 @@ class ChatSession:
         self.save_msg_history()
 
 # Used to build message using context helper functions and message history, then pass to the model to process
-def ollama_client(llm_input) -> TranslationResult:
-    
-    runtime_state, current_user = build_runtime_context()
+def ollama_client(user_input) -> TranslationResult:
+
+    runtime_state, current_user = _build_runtime_context()
     os_info = _build_os_context()
 
-    llm_identity = (
+    system_prompt = (
         f"You are a Linux expert on {os_info}.\n"
         f"--- SYSTEM STATE ---\n{runtime_state}\n\n"
 
@@ -347,29 +395,25 @@ def ollama_client(llm_input) -> TranslationResult:
         "Now provide the command for the following request:"
     )
 
-    session = ChatSession(chat_history_file=CHAT_HISTORY_PATH)
-    session.add_msg_history("user", llm_input)
+    _session.add_msg_history("user", user_input)
 
-    messages = [{"role": "system", "content": llm_identity}] + session.history
+    messages = [{"role": "system", "content": system_prompt}] + _session.history
 
-    # After adding users message to history, cut the oldest off
-    session.prune_msg_history()
+    _session.prune_msg_history()
 
     try:
-        response = llm.create_chat_completion(
+        response = _llm.create_chat_completion(
             messages=messages,
-            temperature=0.15 # From translator.py for precision
+            temperature=0.15,
+            max_tokens=150,
         )
-        llm_reply = response["choices"][0]["message"]["content"]
+        reply = response["choices"][0]["message"]["content"]
     except (KeyError, IndexError) as e:
         return TranslationResult("", "low", "", False, f"Unexpected model response format: {e}")
     except Exception as e:
         return TranslationResult("", "low", "", False, f"Model inference failed: {e}")
-    
-    # Parse the response using the methodical logic from translator.py
-    result = _parse_response(llm_reply)
-    
-    # Still add the full reply to history for context
-    session.add_msg_history("assistant", llm_reply)
+
+    result = _parse_response(reply)
+    _session.add_msg_history("assistant", reply)
 
     return result
