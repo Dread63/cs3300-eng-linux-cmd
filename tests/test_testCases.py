@@ -6,11 +6,11 @@ import os #Need the os
 import re #
 from difflib import SequenceMatcher
 
-# Add current directory to path
-sys.path.insert(0, os.path.dirname(__file__))
+# Add src directory to path
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 # Import only what we need
-from ollama_client import ollama_client
+from ollama_client import ollama_client, initialize
 
 def normalize_command(cmd):
     """
@@ -335,6 +335,8 @@ def main():
     
     print("\n⚠️  SAFETY NOTICE: This test only GENERATES commands, never executes them")
     print("   No files will be modified, deleted, or changed in any way\n")
+
+    initialize()
     
     # Get test cases
     test_cases = get_test_cases()
