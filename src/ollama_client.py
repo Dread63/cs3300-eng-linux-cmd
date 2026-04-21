@@ -13,18 +13,32 @@ MAX_MSG_RETENTION = 20
 MAX_HISTORY_TOKENS = 500  # tune this to adjust how much chat history the model sees
 
 MODELS = {
-
     "qwen2.5-0.5b": {
-        "name" : "qwen2.5-0.5b-instruct-q4_k_m.gguf",
-        "url" : "https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q4_k_m.gguf?download=true",
+        "name": "qwen2.5-0.5b-instruct-q4_k_m.gguf",
+        "url": "https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q4_k_m.gguf?download=true",
         "description": (
-            "Qwen2.5-0.5B-Instruct is the smallest model in the Qwen2.5 series, with 0.49 billion "
-            "parameters and a non-embedding parameter count of just 0.36 billion. Despite its compact "
-            "size, it benefits from the same improvements as the wider Qwen2.5 family, including "
-            "enhanced instruction following, structured output generation, and resilience to diverse "
-            "system prompts. It supports a context length of up to 32K tokens and can generate up to "
-            "8K tokens, making it well-suited for lightweight deployments where speed and low resource "
-            "usage are the priority."
+            "────────────────────────────────────────\n"
+            "MODEL     Qwen2.5-0.5B\n"
+            "TYPE      Instruct / Lightweight\n"
+            "FORMAT    GGUF (Q4_K_M quantized)\n"
+            "SIZE      ~0.49B params (0.36B effective)\n"
+            "MEMORY    ~0.5–1GB RAM\n"
+            "\n"
+            "CONTEXT   32K tokens\n"
+            "GEN       up to 8K tokens\n"
+            "\n"
+            "STRENGTH  Fast inference\n"
+            "          Strong instruction following\n"
+            "          Reliable structured outputs\n"
+            "          Prompt-robust behavior\n"
+            "\n"
+            "LIMIT     Weaker reasoning depth\n"
+            "          Limited world knowledge\n"
+            "\n"
+            "USECASE   Edge devices\n"
+            "          CLI tools / agents\n"
+            "          Low-latency pipelines\n"
+            "────────────────────────────────────────"
         ),
     },
 
@@ -32,15 +46,32 @@ MODELS = {
         "name": "qwen2.5-1.5b-instruct-q5_k_m.gguf",
         "url": "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/qwen2.5-1.5b-instruct-q5_k_m.gguf",
         "description": (
-            "Qwen2.5 is the latest series of Qwen large language models, available in sizes "
-            "ranging from 0.5 to 72 billion parameters. It brings significant improvements in "
-            "knowledge, coding, and mathematics, as well as instruction following, long text "
-            "generation (over 8K tokens), and understanding structured data such as tables. "
-            "Qwen2.5 supports long-context inputs up to 128K tokens, can generate up to 8K tokens, "
-            "and is resilient to diverse system prompts making it well-suited for role-play and "
-            "chatbot applications. It also offers multilingual support for over 29 languages "
-            "including Chinese, English, French, Spanish, Portuguese, German, Italian, Russian, "
-            "Japanese, Korean, Vietnamese, Thai, and Arabic."
+            "────────────────────────────────────────\n"
+            "MODEL     Qwen2.5-1.5B\n"
+            "TYPE      Instruct / General Purpose\n"
+            "FORMAT    GGUF (Q5_K_M quantized)\n"
+            "SIZE      1.5B params\n"
+            "MEMORY    ~1.5–3GB RAM\n"
+            "\n"
+            "CONTEXT   up to 128K tokens\n"
+            "GEN       up to 8K tokens\n"
+            "\n"
+            "STRENGTH  Reasoning & logic\n"
+            "          Coding assistance\n"
+            "          Math capabilities\n"
+            "          Long-context handling\n"
+            "          Structured data (tables/json)\n"
+            "\n"
+            "LANG      29+ supported\n"
+            "          EN, ZH, ES, FR, DE, JP, KR, AR...\n"
+            "\n"
+            "LIMIT     Slower than sub-1B models\n"
+            "          Moderate RAM requirement\n"
+            "\n"
+            "USECASE   Chatbots\n"
+            "          Agents / workflows\n"
+            "          Multi-language systems\n"
+            "────────────────────────────────────────"
         ),
     },
 
@@ -48,32 +79,67 @@ MODELS = {
         "name": "gemma-2b-it.gguf",
         "url": "https://huggingface.co/lmstudio-community/gemma-2-2b-it-GGUF/resolve/main/gemma-2-2b-it-Q4_K_M.gguf?download=true",
         "description": (
-            "Gemma is a family of lightweight, state-of-the-art open models from Google, "
-            "built from the same research and technology used to create the Gemini models. "
-            "They are text-to-text, decoder-only large language models, available in English, "
-            "with open weights, pre-trained variants, and instruction-tuned variants. "
-            "Gemma models are well-suited for a variety of text generation tasks, including "
-            "question answering, summarization, and reasoning. Their relatively small size "
-            "makes it possible to deploy them in environments with limited resources such as "
-            "a laptop, desktop or your own cloud infrastructure, democratizing access to "
-            "state of the art AI models and helping foster innovation for everyone."
-        )
-    },
-
-    "deepseek-coder-1.3b": {
-        "name" : "deepseek-coder-1.3b-instruct.Q4_K_M.gguf",
-        "url" : "https://huggingface.co/TheBloke/deepseek-coder-1.3b-instruct-GGUF/resolve/main/deepseek-coder-1.3b-instruct.Q4_K_M.gguf?download=true",
-        "description": (
-            "DeepSeek Coder is a series of code language models trained from scratch on 2 trillion tokens, "
-            "with a composition of 87% code and 13% natural language in both English and Chinese. "
-            "The 1.3B instruct model is fine-tuned on 2B tokens of instruction data, making it well-suited "
-            "for code generation, completion, and infilling tasks. It supports a 16K context window and "
-            "achieves state-of-the-art performance among open-source code models on benchmarks including "
-            "HumanEval, MultiPL-E, MBPP, DS-1000, and APPS across multiple programming languages. "
-            "Despite its small size, it is capable of project-level code completion and supports "
-            "commercial use under the DeepSeek Model License."
+            "────────────────────────────────────────\n"
+            "MODEL     Gemma 2B\n"
+            "TYPE      Instruction-tuned / Decoder-only\n"
+            "ORIGIN    Google (Gemini research)\n"
+            "FORMAT    GGUF (Q4_K_M quantized)\n"
+            "SIZE      ~2B params\n"
+            "MEMORY    ~2–4GB RAM\n"
+            "\n"
+            "CAPABLE   Question answering\n"
+            "          Summarization\n"
+            "          General reasoning\n"
+            "          Clean text generation\n"
+            "\n"
+            "ADVANT    Small + efficient\n"
+            "          Open weights\n"
+            "          Easy local deployment\n"
+            "\n"
+            "LIMIT     Less tuned for tools/agents\n"
+            "          Narrower multilingual support\n"
+            "\n"
+            "USECASE   Local assistants\n"
+            "          Offline AI\n"
+            "          Personal workflows\n"
+            "────────────────────────────────────────"
         ),
-    }
+    },
+    
+    "deepseek-coder-1.3b": {
+    "name": "deepseek-coder-1.3b-instruct.Q4_K_M.gguf",
+    "url": "https://huggingface.co/TheBloke/deepseek-coder-1.3b-instruct-GGUF/resolve/main/deepseek-coder-1.3b-instruct.Q4_K_M.gguf?download=true",
+    "description": (
+        "────────────────────────────────────────\n"
+        "MODEL     DeepSeek Coder 1.3B\n"
+        "TYPE      Code-specialized / Instruct\n"
+        "FORMAT    GGUF (Q4_K_M quantized)\n"
+        "SIZE      1.3B params\n"
+        "MEMORY    ~1.5–3GB RAM\n"
+        "\n"
+        "CONTEXT   16K tokens\n"
+        "GEN       Code + text output\n"
+        "\n"
+        "TRAINING  2T tokens total\n"
+        "          87% code / 13% natural language\n"
+        "          +2B instruction tuning\n"
+        "\n"
+        "STRENGTH  Code generation\n"
+        "          Completion & infilling\n"
+        "          Multi-language support\n"
+        "          Project-level reasoning\n"
+        "\n"
+        "BENCH     HumanEval • MBPP • APPS • DS-1000\n"
+        "\n"
+        "LIMIT     Weaker general chat\n"
+        "          Less natural conversation\n"
+        "\n"
+        "USECASE   Dev tools\n"
+        "          Code agents\n"
+        "          IDE integration\n"
+        "────────────────────────────────────────"
+        ),
+    },
 }
 
 @dataclass
