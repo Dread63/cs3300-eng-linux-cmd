@@ -3,23 +3,23 @@
 
 import sys #Need to have the system
 import os #Need the os
-import re #
-from difflib import SequenceMatcher
+import re # Need to have some regular expressions
+from difflib import SequenceMatcher # And lets keep these expressions readable
 
 # Add src directory to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src')) 
 
 # Import only what we need
-from ollama_client import ollama_client, initialize
+from ollama_client import ollama_client, initialize #Here we will import the client and everything else needed with ollama
 
-def normalize_command(cmd):
+def normalize_command(cmd): #We want to remove anything that is not needed
     """
     Normalize command for better comparison:
     - Remove extra spaces
     - Remove quotes (both single and double)
     - Remove backticks
     """
-    if not cmd:
+    if not cmd: #If it is not a command, return nothing
         return ""
     
     # Remove quotes and backticks
@@ -31,37 +31,37 @@ def normalize_command(cmd):
     
     return cmd
 
-def calculate_similarity(cmd1, cmd2):
+def calculate_similarity(cmd1, cmd2): #For testing, I want to make a percentage on how similar the command is so that it shows the probability of it working between what is wanted, and what is needed
     """
     Calculate how similar two commands are (0.0 to 1.0)
     Uses SequenceMatcher for string similarity
     """
-    if not cmd1 and not cmd2:
-        return 1.0
-    if not cmd1 or not cmd2:
-        return 0.0
+    if not cmd1 and not cmd2: #Determines the similiarity between cmd 1 and cmd 2
+        return 1.0 #Says hey how close are these two commands?
+    if not cmd1 or not cmd2: #And if they are close they should return upwards of 90%
+        return 0.0 #And if they are not similar at all it shoul dreturn a lower score. 
     
-    norm1 = normalize_command(cmd1)
-    norm2 = normalize_command(cmd2)
+    norm1 = normalize_command(cmd1) #Now we normalize command 1
+    norm2 = normalize_command(cmd2) #And we normalize command 2
     
     # Use sequence matcher for ratio
-    similarity = SequenceMatcher(None, norm1, norm2).ratio()
+    similarity = SequenceMatcher(None, norm1, norm2).ratio() #This should calculate the percentage
     
     # Bonus: Check if core command matches (first word)
-    core1 = norm1.split()[0] if norm1.split() else ""
-    core2 = norm2.split()[0] if norm2.split() else ""
+    core1 = norm1.split()[0] if norm1.split() else "" #If the generated command and the expected command start with the same command then it should boost the similarity score
+    core2 = norm2.split()[0] if norm2.split() else "" #Otherwise, it continues on.
     
-    if core1 == core2 and core1:
+    if core1 == core2 and core1: #If they are close or they match then...
         # Boost similarity if core command matches
         similarity = min(1.0, similarity + 0.2)
     
-    return round(similarity, 2)
+    return round(similarity, 2) #And return the similarity and round it off.
 
-def compare_commands(generated, expected):
+def compare_commands(generated, expected): #Compare the generated and the expected commands
     """
     Compare generated vs expected command and return detailed results
     """
-    similarity = calculate_similarity(generated, expected)
+    similarity = calculate_similarity(generated, expected) #Now we use the function above to calculate the similarity
     
     # Determine success threshold (80% or higher)
     success = similarity >= 0.8
@@ -79,58 +79,58 @@ def compare_commands(generated, expected):
         equality = "Poor"
     
     return {
-        'similarity': similarity,
-        'equality': equality,
-        'success': success,
-        'normalized_generated': normalize_command(generated),
-        'normalized_expected': normalize_command(expected)
+        'similarity': similarity, #Return the similarity score
+        'equality': equality, #Return the equality string
+        'success': success, #Return if the generated command was successful
+        'normalized_generated': normalize_command(generated), #Return the normalized command that the AI generated
+        'normalized_expected': normalize_command(expected) #Return the command that I came up with. 
     }
 
 def run_translation_test(english_request, expected_command, test_id, category):
     """
     Test that an English request produces the expected Linux command
     """
-    print(f"\n{'='*60}")
-    print(f"[{category}] Test {test_id}: '{english_request}'")
-    print(f"{'='*60}")
+    print(f"\n{'='*60}") #I want to keep these commands seperated for ease of access to read
+    print(f"[{category}] Test {test_id}: '{english_request}'") #This will explain what test is running in what category and the english request
+    print(f"{'='*60}") #And seperate the lines
     
     try:
-        result = ollama_client(english_request)
+        result = ollama_client(english_request) #Now we put the english request through ollama
         
-        if result.success:
-            generated = result.command
-            print(f"\n📝 Command Generated: {generated}")
-            print(f"🎯 Expected Command:  {expected_command}")
-            print(f"📊 Confidence: {result.confidence}")
+        if result.success: #And if it was able to come up with a command...
+            generated = result.command #The generated command is applied to the generated variable
+            print(f"\nCommand Generated: {generated}") #And it is printed out here
+            print(f"Expected Command:  {expected_command}") #Compared to the expected command here
+            print(f"Confidence: {result.confidence}") #And finally the confidence level is calculated. 
             
-            if result.warning:
-                print(f"⚠️  Warning: {result.warning}")
+            if result.warning: #If there is a problem with the command
+                print(f"Warning: {result.warning}") #It will tell us here
             
             # Compare commands
             comparison = compare_commands(generated, expected_command)
             
-            print(f"\n📈 Similarity Score: {comparison['similarity']*100:.1f}%")
-            print(f"🏷️  Equality Level: {comparison['equality']}")
-            print(f"{'✅ SUCCESS' if comparison['success'] else '❌ FAILURE'}")
+            print(f"\nSimilarity Score: {comparison['similarity']*100:.1f}%") #Compares the similarity
+            print(f"Equality Level: {comparison['equality']}") #Prints the equality level.
+            print(f"{'SUCCESS' if comparison['success'] else 'FAILURE'}") #And returns whether the command is successful or not
             
             # Show differences if not perfect
-            if comparison['similarity'] < 1.0:
-                print(f"\n🔍 Differences:")
-                print(f"   Normalized Generated: {comparison['normalized_generated']}")
-                print(f"   Normalized Expected:  {comparison['normalized_expected']}")
+            if comparison['similarity'] < 1.0: #If the generated command is not the same as the expected command...
+                print(f"\nDifferences:") #Shows the differences here
+                print(f"   Normalized Generated: {comparison['normalized_generated']}") #Shows the generated command
+                print(f"   Normalized Expected:  {comparison['normalized_expected']}") #And prints out the expected command for the user to read. 
             
-            return comparison['success'], generated, comparison
+            return comparison['success'], generated, comparison #And returns the commands and whether they are successful or not
             
         else:
-            print(f"\n❌ FAILED: {result.error}")
+            print(f"\nFAILED: {result.error}") #Otherwise it will show the failure and will explain why it failed.
             return False, "", {'similarity': 0, 'equality': 'Failed', 'success': False}
             
-    except Exception as e:
-        print(f"\n❌ ERROR: {str(e)}")
-        return False, "", {'similarity': 0, 'equality': 'Error', 'success': False}
+    except Exception as e: #And because we want the test to continue naturally, we will use an except method
+        print(f"\nERROR: {str(e)}") #This way the program will continue instead of interrupting the entire program which saves on time.
+        return False, "", {'similarity': 0, 'equality': 'Error', 'success': False} #And will return as a failed command. 
 
 
-# ============= DEFINE YOUR TEST CASES HERE =============
+# ============= THESE ARE OUR TEST CASES =============
 # Format: (english_request, expected_command, test_id, category)
 # 
 # Categories:
@@ -148,7 +148,7 @@ def run_translation_test(english_request, expected_command, test_id, category):
 def get_test_cases():
     """
     Add your test cases here.
-    Each test case is a tuple: (english_request, expected_command, test_id, category)
+    Each test case is a tuple: (english_request, expected_command, test_id)
     """
     test_cases = []
     
@@ -167,7 +167,7 @@ def get_test_cases():
     ]
     
     for req, cmd, tid in simple_tests:
-        test_cases.append((req, cmd, tid, "Simple"))
+        test_cases.append((req, cmd, tid, "Simple")) #Take each of the test cases and append it as simple test cases
     
     # ===== CATEGORY 2: Intermediate =====
     intermediate_tests = [
@@ -184,7 +184,7 @@ def get_test_cases():
     ]
     
     for req, cmd, tid in intermediate_tests:
-        test_cases.append((req, cmd, tid, "Intermediate"))
+        test_cases.append((req, cmd, tid, "Intermediate")) #For each of the test cases append them for intermediate
     
     # ===== CATEGORY 3: Two Step =====
     twostep_tests = [
@@ -201,7 +201,7 @@ def get_test_cases():
     ]
     
     for req, cmd, tid in twostep_tests:
-        test_cases.append((req, cmd, tid, "Two Step"))
+        test_cases.append((req, cmd, tid, "Two Step")) #For each of the test cases append them for the two step 
     
     # ===== CATEGORY 4: More Steps =====
     moresteps_tests = [
@@ -218,7 +218,7 @@ def get_test_cases():
     ]
     
     for req, cmd, tid in moresteps_tests:
-        test_cases.append((req, cmd, tid, "More Steps"))
+        test_cases.append((req, cmd, tid, "More Steps")) #For each of the test cases, append them to the more stpes test 
     
     # ===== CATEGORY 5: Mathematical =====
     mathematical_tests = [
@@ -235,7 +235,7 @@ def get_test_cases():
     ]
     
     for req, cmd, tid in mathematical_tests:
-        test_cases.append((req, cmd, tid, "Mathematical"))
+        test_cases.append((req, cmd, tid, "Mathematical")) #For each of the test cases, append them in the mathematical section
     
     # ===== CATEGORY 6: System Functions =====
     system_tests = [
@@ -252,7 +252,7 @@ def get_test_cases():
     ]
     
     for req, cmd, tid in system_tests:
-        test_cases.append((req, cmd, tid, "System Functions"))
+        test_cases.append((req, cmd, tid, "System Functions")) #For each of the test cases, append them in the system functions section
     
     # ===== CATEGORY 7: Blocked Commands =====
     blocked_tests = [
@@ -269,7 +269,7 @@ def get_test_cases():
     ]
     
     for req, cmd, tid in blocked_tests:
-        test_cases.append((req, cmd, tid, "Blocked Commands"))
+        test_cases.append((req, cmd, tid, "Blocked Commands")) #For each of the test cases, append their outputs in the blocked commands section
     
     # ===== CATEGORY 8: Hardly English =====
     hardly_tests = [
@@ -286,7 +286,7 @@ def get_test_cases():
     ]
     
     for req, cmd, tid in hardly_tests:
-        test_cases.append((req, cmd, tid, "Hardly English"))
+        test_cases.append((req, cmd, tid, "Hardly English")) #For each of the test cases, append them in the hardly english category
     
     # ===== CATEGORY 9: Mathematical System Functions =====
     mathsys_tests = [
@@ -303,7 +303,7 @@ def get_test_cases():
     ]
     
     for req, cmd, tid in mathsys_tests:
-        test_cases.append((req, cmd, tid, "Mathematical System Functions"))
+        test_cases.append((req, cmd, tid, "Mathematical System Functions")) #For each of the test cases, append them to the mathematical system functions test
     
     # ===== CATEGORY 10: Advanced =====
     advanced_tests = [
@@ -320,64 +320,59 @@ def get_test_cases():
     ]
     
     for req, cmd, tid in advanced_tests:
-        test_cases.append((req, cmd, tid, "Advanced"))
+        test_cases.append((req, cmd, tid, "Advanced")) #And finally for each of the test cases, append them to the advanced test function test 
     
-    return test_cases
+    return test_cases #Finally return the test cases
 
 
-def main():
-    print("\n" + "█"*60)
-    print("█" + " " * 58 + "█")
-    print("█" + "   LINUX COMMAND ASSISTANT - CUSTOM TEST SUITE".center(58) + "█")
-    print("█" + "   (Add Your Own Test Cases)".center(58) + "█")
-    print("█" + " " * 58 + "█")
-    print("█"*60)
-    
-    print("\n⚠️  SAFETY NOTICE: This test only GENERATES commands, never executes them")
+def main(): #Time to finish off with the main function
+    #Lets greet the user
+    print("\n Welcome to the English to Unix Comand test cases!")
+    print("\nSAFETY NOTICE: This test only GENERATES commands, never executes them")
     print("   No files will be modified, deleted, or changed in any way\n")
 
-    initialize()
+    initialize() #And get to work on initializing the test cases
     
     # Get test cases
-    test_cases = get_test_cases()
+    test_cases = get_test_cases() 
     
-    if not test_cases:
-        print("\n❌ No test cases defined!")
-        print("\n📝 Please add your test cases in the get_test_cases() function.")
+    if not test_cases: #Basically, if anything does not match the firmat shown below, this function will be called.
+        print("\nNo test cases defined!")
+        print("\nPlease add your test cases in the get_test_cases() function.")
         print("   Each test case format: (english_request, expected_command, test_id, category)")
         print("\n   Example:")
         print("   ('list all files', 'ls -la', 'SIMPLE-01', 'Simple')")
-        return 1
+        return 1 #Here we can just educate the user on how to manage the test cases
     
     print(f"\nRunning {len(test_cases)} translation tests across 10 categories...")
     print("="*60)
     
     # Track results by category
-    category_results = {}
-    passed = 0
-    failed = 0
-    results = []
-    total_similarity = 0
+    category_results = {} #Grade in the category
+    passed = 0 #Enumarate with the total passed
+    failed = 0 #Enumarate with the total failed
+    results = [] #Get teh results in the list
+    total_similarity = 0 #And enumerate any with similarity and score it. 
     
-    for english_request, expected_command, test_id, category in test_cases:
-        success, generated, comparison = run_translation_test(
+    for english_request, expected_command, test_id, category in test_cases: #Now then, for each request aka each test case that goes through...
+        success, generated, comparison = run_translation_test( #We run the translation test!
             english_request, expected_command, test_id, category
         )
         
-        if success:
+        if success: #Here we enumarate the pass fail system and we get to see what the grade is on it. 
             passed += 1
         else:
             failed += 1
         
-        total_similarity += comparison['similarity']
-        results.append((test_id, category, english_request, generated, expected_command, comparison, success))
+        total_similarity += comparison['similarity'] #Here we will provide the commands similarity
+        results.append((test_id, category, english_request, generated, expected_command, comparison, success)) #And we get to know everything that was tested here.
         
         # Track by category
-        if category not in category_results:
-            category_results[category] = {'passed': 0, 'failed': 0, 'similarity': 0, 'count': 0}
-        category_results[category]['passed' if success else 'failed'] += 1
-        category_results[category]['similarity'] += comparison['similarity']
-        category_results[category]['count'] += 1
+        if category not in category_results: #I simply had a ton of errors when I was trying to come up with test cases, and many times there was a typo, so I made this so that it checks whether the tested command is in a certain category
+            category_results[category] = {'passed': 0, 'failed': 0, 'similarity': 0, 'count': 0} #And we use some simple dictionaries to manage it. 
+        category_results[category]['passed' if success else 'failed'] += 1 #Here we get to enumarate the pass fails
+        category_results[category]['similarity'] += comparison['similarity'] #And here we get to score the similarity
+        category_results[category]['count'] += 1 #And finally we get to increment to the next part and keep track of the score. 
     
     # Print summary
     print("\n" + "="*60)
@@ -385,122 +380,122 @@ def main():
     print("="*60)
     
     # Overall statistics
-    avg_similarity = (total_similarity / len(test_cases)) * 100 if test_cases else 0
+    avg_similarity = (total_similarity / len(test_cases)) * 100 if test_cases else 0 #Here we calculate the average similarity of the commands. 
     
-    print(f"\n📊 Overall Statistics:")
-    print(f"   ✅ Passed: {passed}/{len(test_cases)} tests ({passed/len(test_cases)*100:.1f}%)")
-    print(f"   ❌ Failed: {failed}/{len(test_cases)} tests")
-    print(f"   📈 Average Similarity: {avg_similarity:.1f}%")
+    print(f"\nOverall Statistics:") #And here we get to try out our fancy bell curve operations! If you're in statistics that is. No bell curves here.
+    print(f"   Passed: {passed}/{len(test_cases)} tests ({passed/len(test_cases)*100:.1f}%)") #BUT we do have our average for our passed...
+    print(f"   Failed: {failed}/{len(test_cases)} tests") #AND our failed test cases
+    print(f"   Average Similarity: {avg_similarity:.1f}%") #That will be properly rounded off, so there are no sharp numbers. 
     
     # Grade based on average similarity
-    if avg_similarity >= 90:
+    if avg_similarity >= 90: #A+ Because that is outstanding for an LLM running off of a potato
         grade = "A+ - Excellent!"
-    elif avg_similarity >= 80:
+    elif avg_similarity >= 80: #Still gets an A because still good performance based off of what is running off of
         grade = "A - Very Good"
-    elif avg_similarity >= 70:
+    elif avg_similarity >= 70: #Id still argue that even a 7/10 on an AI is a good score, because mainly AI cant generate good commands.
         grade = "B - Good"
-    elif avg_similarity >= 60:
+    elif avg_similarity >= 60: #And at this point its no surprises here.
         grade = "C - Acceptable"
-    elif avg_similarity >= 50:
+    elif avg_similarity >= 50: #Even if it scores above fifty, I believe it succeeded. Just needs performance
         grade = "D - Needs Improvement"
     else:
-        grade = "F - Poor Performance"
+        grade = "F - Poor Performance" #Regardless, that is what can be improved
     
-    print(f"   🎓 Overall Grade: {grade}")
+    print(f"   Overall Grade: {grade}") #And here we get to see our final grade. Well not OUR final grade for the class but the AI's final grade here.
     
     # Results by category
     print("\n" + "="*60)
     print("RESULTS BY CATEGORY")
     print("="*60)
     
-    for category in sorted(category_results.keys()):
-        stats = category_results[category]
-        total = stats['count']
-        passed_cat = stats['passed']
-        avg_sim_cat = (stats['similarity'] / total) * 100 if total > 0 else 0
+    for category in sorted(category_results.keys()): #So for each category we test
+        stats = category_results[category] #Show the stats
+        total = stats['count'] #Show the count
+        passed_cat = stats['passed'] #Show whether it passed
+        avg_sim_cat = (stats['similarity'] / total) * 100 if total > 0 else 0 #And finally show the average of the results. 
         
-        print(f"\n📁 {category}")
-        print(f"   Passed: {passed_cat}/{total} ({passed_cat/total*100:.1f}%)")
-        print(f"   Avg Similarity: {avg_sim_cat:.1f}%")
+        print(f"\n {category}") #Show the category we are testing
+        print(f"   Passed: {passed_cat}/{total} ({passed_cat/total*100:.1f}%)") #Show the score
+        print(f"   Avg Similarity: {avg_sim_cat:.1f}%") #And finally show the average
     
     # Detailed results table
     print("\n" + "="*60)
     print("DETAILED RESULTS TABLE")
     print("="*60)
-    print(f"{'ID':<12} {'Category':<14} {'Success':<8} {'Similarity':<10} {'English Request'}")
+    print(f"{'ID':<12} {'Category':<14} {'Success':<8} {'Similarity':<10} {'English Request'}") #Here we just want to see the score and how well it did and make sure that no lines exceed beyond a certain number of characters so that we can keep ourselves organized. 
     print("-"*60)
     
-    for test_id, category, request, generated, expected, comparison, success in results:
-        success_str = "✅" if success else "❌"
-        sim_str = f"{comparison['similarity']*100:.0f}%"
+    for test_id, category, request, generated, expected, comparison, success in results: #Now then lets do a loop so that each test can be documented
+        success_str = "Success" if success else "Fail" #Shows either success or fail
+        sim_str = f"{comparison['similarity']*100:.0f}%" #Shows the similarity score
         # Truncate request if too long
-        request_short = request[:35] + "..." if len(request) > 35 else request
-        print(f"{test_id:<12} {category:<14} {success_str:<8} {sim_str:<10} {request_short}")
+        request_short = request[:35] + "..." if len(request) > 35 else request #Shortens the request if it is too long
+        print(f"{test_id:<12} {category:<14} {success_str:<8} {sim_str:<10} {request_short}") #And outputs everything that was inputted for documentation
     
     # Show failures in detail
-    failed_results = [r for r in results if not r[6]]
-    if failed_results:
+    failed_results = [r for r in results if not r[6]] #I was having issues earlier with some echo commands. Basically, I wanted ETUC to say hi to my mom, and it failed, so I wanted to know why, and I came up with this solution. 
+    if failed_results: #First lets get ourselves organized like sheep on a motorcycle. That is a Wallace and Gromit reference. 
         print("\n" + "="*60)
-        print("❌ FAILED TESTS - DETAILED ANALYSIS")
+        print("FAILED TESTS - DETAILED ANALYSIS")
         print("="*60)
         
-        for test_id, category, request, generated, expected, comparison, success in failed_results:
-            print(f"\n📋 {test_id} [{category}]: '{request}'")
-            print(f"   Generated: {generated}")
-            print(f"   Expected:  {expected}")
-            print(f"   Similarity: {comparison['similarity']*100:.1f}%")
-            print(f"   Issue: {comparison['equality']} match")
+        for test_id, category, request, generated, expected, comparison, success in failed_results: #Same as before. We want to know everything there is about this failure and why it happened. 
+            print(f"\n{test_id} [{category}]: '{request}'") #We get the ID, the category, and the request
+            print(f"   Generated: {generated}") #The command that was generated
+            print(f"   Expected:  {expected}") #The command that failed
+            print(f"   Similarity: {comparison['similarity']*100:.1f}%") #The similarity
+            print(f"   Issue: {comparison['equality']} match") #And how much it matched. 
     
     # Save detailed results to file
     print("\n" + "="*60)
-    print("💾 SAVING RESULTS")
+    print("SAVING RESULTS")
     print("="*60)
     
-    with open("test_results_detailed.txt", "w") as f:
-        f.write("LINUX COMMAND ASSISTANT - DETAILED TEST RESULTS\n")
-        f.write("="*60 + "\n\n")
-        f.write(f"Total Tests: {len(test_cases)}\n")
-        f.write(f"Passed: {passed}\n")
-        f.write(f"Failed: {failed}\n")
-        f.write(f"Average Similarity: {avg_similarity:.1f}%\n")
-        f.write(f"Grade: {grade}\n\n")
+    with open("test_results_detailed.txt", "w") as f: #And now it is time to save our work! I want it put in a file called test_results_detailed.txt
+        f.write("LINUX COMMAND ASSISTANT - DETAILED TEST RESULTS\n") #Write this out
+        f.write("="*60 + "\n\n") #Add some seperation for readability
+        f.write(f"Total Tests: {len(test_cases)}\n") #Tell us the total number of tests that were tested. lol
+        f.write(f"Passed: {passed}\n") #Show what was passed
+        f.write(f"Failed: {failed}\n") #Show what failed
+        f.write(f"Average Similarity: {avg_similarity:.1f}%\n") #Calculate the average similarity
+        f.write(f"Grade: {grade}\n\n") #And present the user with the chatbots grade. 
         
         f.write("RESULTS BY CATEGORY\n")
         f.write("-"*40 + "\n")
-        for category in sorted(category_results.keys()):
-            stats = category_results[category]
-            total = stats['count']
-            passed_cat = stats['passed']
-            avg_sim_cat = (stats['similarity'] / total) * 100 if total > 0 else 0
-            f.write(f"{category}: {passed_cat}/{total} passed, {avg_sim_cat:.1f}% avg similarity\n")
+        for category in sorted(category_results.keys()): #Now before anything gets written out, we should write out everything one at a time. This is what this for loop is for
+            stats = category_results[category] #Take the category
+            total = stats['count'] #Take the count
+            passed_cat = stats['passed'] #Take the passed results category
+            avg_sim_cat = (stats['similarity'] / total) * 100 if total > 0 else 0 #Take the average 
+            f.write(f"{category}: {passed_cat}/{total} passed, {avg_sim_cat:.1f}% avg similarity\n") #And finally write that individual categories score down. 
         
+        #And here we get to move onto the individual score for each test.
         f.write("\n" + "="*60 + "\n")
         f.write("INDIVIDUAL TEST RESULTS\n")
         f.write("="*60 + "\n\n")
         
         for test_id, category, request, generated, expected, comparison, success in results:
-            f.write(f"Test {test_id} [{category}]: {request}\n")
-            f.write(f"  Status: {'PASS' if success else 'FAIL'}\n")
-            f.write(f"  Similarity: {comparison['similarity']*100:.1f}%\n")
-            f.write(f"  Equality: {comparison['equality']}\n")
-            f.write(f"  Generated: {generated}\n")
-            f.write(f"  Expected:  {expected}\n")
-            f.write("\n" + "-"*40 + "\n\n")
+            f.write(f"Test {test_id} [{category}]: {request}\n") #Same as before, write the test id, category, and the english request
+            f.write(f"  Status: {'PASS' if success else 'FAIL'}\n") #write if it passed or failed
+            f.write(f"  Similarity: {comparison['similarity']*100:.1f}%\n") #Write teh similarity score
+            f.write(f"  Equality: {comparison['equality']}\n") #Write how well they were equal
+            f.write(f"  Generated: {generated}\n") #Write out the generated command
+            f.write(f"  Expected:  {expected}\n") #Write out the expected command
+            f.write("\n" + "-"*40 + "\n\n") #And finally add some -'s for readability. 
     
-    print(f"✓ Detailed results saved to: test_results_detailed.txt")
+    print(f"Detailed results saved to: test_results_detailed.txt")
     
     # Final verdict
     print("\n" + "="*60)
     if failed == 0:
-        print("🎉 PERFECT SCORE! All tests passed! 🎉")
+        print("PERFECT SCORE! All tests passed!") #Dont expect that for awhile
         return 0
     elif avg_similarity >= 80:
-        print("👍 GOOD RESULTS! Most commands are accurate.")
+        print("GOOD RESULTS! Most commands are accurate.") #Hope for this
         return 0
     else:
-        print("⚠️  NEEDS IMPROVEMENT - Review failed tests above")
+        print("NEEDS IMPROVEMENT - Review failed tests above") #And expect this.
         return 1
 
 
-if __name__ == "__main__":
-    sys.exit(main())
+main()
