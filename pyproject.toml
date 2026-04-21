@@ -1,6 +1,6 @@
 [project]
 name = "eng-linux-cmd"
-version = "0.1.1-d"
+version = "0.1.1.d"
 
 dependencies = [
     "typer",
