@@ -100,6 +100,7 @@ def cli_loop(query=None, model=None, explain_flag=False):
                 print("Command returned no results.")
             elif return_code != 0:
                 print(f"Command Failed with return code: {return_code}")
+    ui.show_goodbye()
 
 if __name__ == "__main__":
     # Hand control to the CLI module for flag parsing
