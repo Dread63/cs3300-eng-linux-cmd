@@ -1,5 +1,6 @@
 import subprocess
 import os
+import re
 
 def validate_command(command: str) -> bool:
     """
@@ -33,17 +34,17 @@ def determine_shell_state(command: str) -> bool:
     state_changing_commands = [
         "cd",
         "export",
-        "alials",
+        "alias",
         "set",
         "unset",
     ]
-    
+
     cmd_clean = command.strip().lower()
-    
+
     for cmd in state_changing_commands:
-        if cmd in cmd_clean:
+        if re.search(r'\b' + re.escape(cmd) + r'\b', cmd_clean):
             return True
-        
+
     return False
 
 def run_command(command: str):
@@ -65,6 +66,30 @@ def run_command(command: str):
             except Exception as e:
                 print(f"Error changing directories: {e}")
                 return 1
+        
+        if command.startswith("export ") or command.startswith("set "):
+            try:
+                parts = command.split(None, 1)[1].split("=", 1)
+                if len(parts) == 2:
+                    os.environ[parts[0]] = parts[1]
+                else:
+                    print(f"Could not parse variable assignment: {command}")
+                    return 1
+            except Exception as e:
+                print(f"Error setting variable: {e}")
+                return 1
+
+        if command.startswith("unset "):
+            try:
+                var_name = command.split()[1]
+                os.environ.pop(var_name, None)
+            except Exception as e:
+                print(f"Error unsetting variable: {e}")
+                return 1
+            
+        if command.startswith("alias "):
+            print("Alias not supported by utility, you must complete this action in your terminal manually")
+            
         
         return 0
     #TODO: Implement logic for other state changing commands
