@@ -2,31 +2,41 @@
 # HARD SILENCE MODE 
 # =========================
 
-# Comment this out if you are debugging 
+
 import os
 import sys
 import warnings
+from ollama_client import MODELS
 
 # MUST be first: silence Python warnings
 # warnings.filterwarnings("ignore")
-
-# HuggingFace + Transformers silence
-# os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"
-# os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
-# os.environ["HF_HUB_DISABLE_PROGRESS_BARS"] = "1"
-# os.environ["TRANSFORMERS_VERBOSITY"] = "error"
-# os.environ["TOKENIZERS_PARALLELISM"] = "false"
-
-# llama.cpp silence
-# os.environ["GGML_LOG_LEVEL"] = "0"
-
-# Prevent HF logging system from printing early
-# os.environ["HF_HUB_OFFLINE"] = "0"
 
 # HARD PIPE STDERR 
 class DevNull:
     def write(self, *_): pass
     def flush(self): pass
+
+def apply_silence_mode():
+    warnings.filterwarnings("ignore")
+
+    os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"
+    os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
+    os.environ["HF_HUB_DISABLE_PROGRESS_BARS"] = "1"
+    os.environ["TRANSFORMERS_VERBOSITY"] = "error"
+    os.environ["TOKENIZERS_PARALLELISM"] = "false"
+    os.environ["GGML_LOG_LEVEL"] = "0"
+
+    sys.stderr = DevNull()
+
+
+#list_models flag
+def list_models():
+    print("\nAvailable Models:\n")
+    
+    for key, data in MODELS.items():
+        print(f"{key}")
+        print(data["description"])
+        print()
 
 # sys.stderr = DevNull()
 sys.stdout = sys.stdout  # keep normal output
@@ -41,7 +51,14 @@ from security import validate_command, run_command
 from explainer import CommandExplainer
 from terminal_ui import TerminalUI
 
-def cli_loop(query=None, model=None, explain_flag=False):
+def cli_loop(
+    query=None,
+    model=None,
+    explain_flag=False,
+    debug_flag=False,
+    reset_flag=False,
+    list_models_flag=False
+):
 
     llm = initialize(model_flag=model)
 
@@ -52,7 +69,18 @@ def cli_loop(query=None, model=None, explain_flag=False):
 
     first_iteration = True
 
+    #debug mode flag implimentation
+    if not debug_flag:
+        apply_silence_mode()
+
+
     while True:
+
+        #exit loop early if --list_model flag set
+        if list_models_flag:
+            list_models()
+            return
+        
         if first_iteration and query:
             user_input = query
             first_iteration = False
@@ -72,18 +100,18 @@ def cli_loop(query=None, model=None, explain_flag=False):
         
         if not result.success:
             ui.show_error(result.error)
-            print(f"DEBUG: The model actually said:\n{result.raw_output}")
+            if debug_flag:
+                print(f"DEBUG: The model actually said:\n{result.raw_output}")
             continue
             
         ui.show_command(result)
 
         # Explain command if flag is set
         if explain_flag:
-            ui.display_status("Explaining")
-            exp = explainer.explain(result.command)
-            if exp.success:
-                ui.explaining_spinner()
-                ui.show_explanation(exp.summary, exp.breakdown, exp.warning)
+            with ui.explaining_spinner():
+                exp = explainer.explain(result.command)
+            ui.show_explanation(exp)
+
 
         # Check security of command
         if not validate_command(result.command):
