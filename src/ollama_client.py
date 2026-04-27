@@ -483,3 +483,11 @@ def ollama_client(user_input) -> TranslationResult:
     _session.add_msg_history("assistant", reply)
 
     return result
+
+#for reset flag
+def reset_config():
+    """Delete local user config.json in application data directory."""
+    if os.path.exists(CONFIG_PATH):
+        os.remove(CONFIG_PATH)
+        return True
+    return False

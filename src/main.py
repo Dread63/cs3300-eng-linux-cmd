@@ -6,6 +6,9 @@
 import os
 import sys
 import warnings
+
+#for flags
+from ollama_client import reset_config
 from ollama_client import MODELS
 
 # MUST be first: silence Python warnings
@@ -59,6 +62,18 @@ def cli_loop(
     reset_flag=False,
     list_models_flag=False
 ):
+    if reset_flag:
+        confirm = input("Reset local config? (y/N): ").strip().lower()
+
+        if confirm == "y":
+            if reset_config():
+                print("Config reset successfully.")
+            else:
+                print("No config file found.")
+        else:
+            print("Reset cancelled.")
+
+        return
 
     llm = initialize(model_flag=model)
 
