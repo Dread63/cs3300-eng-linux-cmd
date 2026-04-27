@@ -25,9 +25,6 @@ def validate_command(command: str) -> bool:
             
     return True
 
-# TODO: Implement shell state handling
-# Used to handle shell changing commands such as cd, alias, etc
-# Return True if state changing, flase if not
 def determine_shell_state(command: str) -> bool:
     
     # TODO: Determine if there are more state changing commands we should be taking into account
@@ -49,7 +46,7 @@ def determine_shell_state(command: str) -> bool:
 
 def run_command(command: str):
     """
-    Executes the command in the shell and returns (stdout, stderr).
+    Executes the command in the shell and returns the return code.
     """
     
     state_changing = determine_shell_state(command)
@@ -92,8 +89,7 @@ def run_command(command: str):
             
         
         return 0
-    #TODO: Implement logic for other state changing commands
-    
+
     try:
         # Use bash on Linux/Mac, default shell on Windows
         executable = '/bin/bash' if os.name != 'nt' else None
@@ -107,4 +103,5 @@ def run_command(command: str):
         )
         return result.returncode
     except Exception as e:
-        return None, str(e)
+        print(f"Command execution failed: {e}")
+        return 1

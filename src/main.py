@@ -1,38 +1,27 @@
 # =========================
-# HARD SILENCE MODE 
+# HARD SILENCE MODE
 # =========================
-
-# Comment this out if you are debugging 
 import os
 import sys
 import warnings
 
-# MUST be first: silence Python warnings
-# warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore")
 
-# HuggingFace + Transformers silence
-# os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"
-# os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
-# os.environ["HF_HUB_DISABLE_PROGRESS_BARS"] = "1"
-# os.environ["TRANSFORMERS_VERBOSITY"] = "error"
-# os.environ["TOKENIZERS_PARALLELISM"] = "false"
+os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"
+os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
+os.environ["HF_HUB_DISABLE_PROGRESS_BARS"] = "1"
+os.environ["TRANSFORMERS_VERBOSITY"] = "error"
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+os.environ["GGML_LOG_LEVEL"] = "0"
+os.environ["HF_HUB_OFFLINE"] = "0"
 
-# llama.cpp silence
-# os.environ["GGML_LOG_LEVEL"] = "0"
-
-# Prevent HF logging system from printing early
-# os.environ["HF_HUB_OFFLINE"] = "0"
-
-# HARD PIPE STDERR 
 class DevNull:
     def write(self, *_): pass
     def flush(self): pass
 
-# sys.stderr = DevNull()
-sys.stdout = sys.stdout  # keep normal output
-
+sys.stderr = DevNull()
 # =========================
-# END OF HARD SILENCE MODE 
+# END OF HARD SILENCE MODE
 # =========================
 
 import cli
@@ -56,45 +45,39 @@ def cli_loop(query=None, model=None, explain_flag=False):
         if first_iteration and query:
             user_input = query
             first_iteration = False
-            print(f"\nInitial request: {user_input}")
+            ui._line("INPUT", user_input)
         else:
             user_input = ui.get_query()
 
-        # Exit loop if user entered either exit or quit
         if user_input.lower() in ['exit', 'quit']:
             break
-        
+
         if not user_input:
             continue
 
-        # Generate the user command by running client
-        result = ollama_client(user_input)
-        
+        with ui.translating_spinner():
+            result = ollama_client(user_input)
+
         if not result.success:
             ui.show_error(result.error)
-            print(f"DEBUG: The model actually said:\n{result.raw_output}")
             continue
-            
+
         ui.show_command(result)
 
-        # Explain command if flag is set
         if explain_flag:
-            ui.display_status("Explaining")
-            exp = explainer.explain(result.command)
+            with ui.explaining_spinner():
+                exp = explainer.explain(result.command)
             if exp.success:
-                ui.explaining_spinner()
-                ui.show_explanation(exp.summary, exp.breakdown, exp.warning)
+                ui.show_explanation(exp)
 
-        # Check security of command
         if not validate_command(result.command):
             ui.show_error("Command rejected by security policy.")
             continue
 
-        # Execution of command if user selects yes
         confirm = input("\nRun command? (y/N): ").lower()
         if confirm == 'y':
-            ui.executing_spinner()
-            return_code = run_command(result.command)
+            with ui.executing_spinner():
+                return_code = run_command(result.command)
 
             if return_code == 1:
                 print("Command returned no results.")
@@ -103,5 +86,4 @@ def cli_loop(query=None, model=None, explain_flag=False):
     ui.show_goodbye()
 
 if __name__ == "__main__":
-    # Hand control to the CLI module for flag parsing
     cli.run()

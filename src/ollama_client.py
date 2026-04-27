@@ -268,25 +268,26 @@ def save_config(model_key: str):
         print(f"Failed to save config data {e}")
    
 def prompt_model_selection() -> str:
-    
+
+    model_keys = list(MODELS.keys())
+
     print("-----------MODELS----------")
-    for i, key in enumerate(MODELS, 1):
-        print(f"{i}. {key} - {MODELS[key]['description']}")
-    print("Please enter name of desired model")
+    for i, key in enumerate(model_keys, 1):
+        print(f"{i}. {key}\n{MODELS[key]['description']}\n")
+    print(f"Enter a number (1-{len(model_keys)}) or model name to select.")
 
-    model_matched = False
-
-    while model_matched == False:
-        
+    while True:
         user_input = input("\nSelect a Model: ").strip()
 
-        if user_input in MODELS:
-            model_matched = True
-
+        if user_input.isdigit():
+            index = int(user_input) - 1
+            if 0 <= index < len(model_keys):
+                return model_keys[index]
+            print(f"Invalid number. Please enter 1-{len(model_keys)}.")
+        elif user_input in MODELS:
+            return user_input
         else:
-            print(f"Invalid Selection, model {user_input} not in database")
-
-    return user_input
+            print(f"Invalid selection '{user_input}'. Enter a number 1-{len(model_keys)} or a model name.")
     
 def resolve_model(model_flag: str | None) -> str:
 

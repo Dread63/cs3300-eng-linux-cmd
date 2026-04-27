@@ -327,7 +327,7 @@ def get_test_cases():
 
 def main(): #Time to finish off with the main function
     #Lets greet the user
-    print("\n Welcome to the English to Unix Comand test cases!")
+    print("\n Welcome to the English to Unix Command test cases!")
     print("\nSAFETY NOTICE: This test only GENERATES commands, never executes them")
     print("   No files will be modified, deleted, or changed in any way\n")
 
