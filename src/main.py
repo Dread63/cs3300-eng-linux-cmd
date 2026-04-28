@@ -49,7 +49,7 @@ def cli_loop(
     list_models_flag=False
 ):
     if reset_flag:
-        confirm = input("Reset local config? (y/N): ").strip().lower()
+        confirm = input("Reset local config, history and models? (y/N): ").strip().lower()
         if confirm == "y":
             if reset_config():
                 print("Config reset successfully.")

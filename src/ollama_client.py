@@ -492,7 +492,12 @@ def ollama_client(user_input) -> TranslationResult:
 #for reset flag
 def reset_config():
     """Delete local user config.json in application data directory."""
-    if os.path.exists(CONFIG_PATH):
-        os.remove(CONFIG_PATH)
-        return True
+    if os.path.exists(MODEL_DIR):
+
+        for f in os.listdir(MODEL_DIR):
+            full_path = os.path.join(MODEL_DIR, f)
+
+            if os.path.isfile(full_path):
+                os.remove(full_path)
+
     return False
