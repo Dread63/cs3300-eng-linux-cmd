@@ -5,21 +5,31 @@ import os
 import sys
 import warnings
 
-warnings.filterwarnings("ignore")
-
-os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"
-os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
-os.environ["HF_HUB_DISABLE_PROGRESS_BARS"] = "1"
-os.environ["TRANSFORMERS_VERBOSITY"] = "error"
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
-os.environ["GGML_LOG_LEVEL"] = "0"
-os.environ["HF_HUB_OFFLINE"] = "0"
+from ollama_client import reset_config, MODELS
 
 class DevNull:
     def write(self, *_): pass
     def flush(self): pass
 
-sys.stderr = DevNull()
+def apply_silence_mode():
+    warnings.filterwarnings("ignore")
+
+    os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"
+    os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
+    os.environ["HF_HUB_DISABLE_PROGRESS_BARS"] = "1"
+    os.environ["TRANSFORMERS_VERBOSITY"] = "error"
+    os.environ["TOKENIZERS_PARALLELISM"] = "false"
+    os.environ["GGML_LOG_LEVEL"] = "0"
+
+    sys.stderr = DevNull()
+
+def list_models():
+    print("\nAvailable Models:\n")
+    for key, data in MODELS.items():
+        print(f"{key}")
+        print(data["description"])
+        print()
+
 # =========================
 # END OF HARD SILENCE MODE
 # =========================
@@ -30,7 +40,31 @@ from security import validate_command, run_command
 from explainer import CommandExplainer
 from terminal_ui import TerminalUI
 
-def cli_loop(query=None, model=None, explain_flag=False):
+def cli_loop(
+    query=None,
+    model=None,
+    explain_flag=False,
+    debug_flag=False,
+    reset_flag=False,
+    list_models_flag=False
+):
+    if reset_flag:
+        confirm = input("Reset local config? (y/N): ").strip().lower()
+        if confirm == "y":
+            if reset_config():
+                print("Config reset successfully.")
+            else:
+                print("No config file found.")
+        else:
+            print("Reset cancelled.")
+        return
+
+    if list_models_flag:
+        list_models()
+        return
+
+    if not debug_flag:
+        apply_silence_mode()
 
     llm = initialize(model_flag=model)
 
@@ -60,6 +94,8 @@ def cli_loop(query=None, model=None, explain_flag=False):
 
         if not result.success:
             ui.show_error(result.error)
+            if debug_flag:
+                print(f"DEBUG: The model actually said:\n{result.raw_output}")
             continue
 
         ui.show_command(result)
