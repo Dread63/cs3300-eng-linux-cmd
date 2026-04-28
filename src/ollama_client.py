@@ -289,15 +289,19 @@ def prompt_model_selection() -> str:
         else:
             print(f"Invalid selection '{user_input}'. Enter a number 1-{len(model_keys)} or a model name.")
     
-def resolve_model(model_flag: str | None) -> str:
+def resolve_model(model_flag: int | None) -> str:
 
-    if model_flag:
-        if model_flag not in MODELS:
+    model_keys = list(MODELS.keys())
+
+    if model_flag != None:
+
+        if 0 <= model_flag - 1  < len(model_keys):
+            save_config(model_keys[model_flag - 1])
+            return model_keys[model_flag - 1]
+        else:
             print(f"Unknown model '{model_flag}'. Available: {', '.join(MODELS.keys())}")
             sys.exit(1)
-        save_config(model_flag)
-        return model_flag
-
+ 
     saved = load_config()
     if saved and saved in MODELS:
         return saved
@@ -338,7 +342,7 @@ def download_model(model_full_path: str, model_key: str):
             print(f"Download failed: {e}")
             sys.exit(1)
 
-def initialize(model_flag: str | None = None) -> Llama:
+def initialize(model_flag: int | None = None) -> Llama:
 
     """ Used to instantiate the model object, download the selected model, and instantiate a chat session
     _llm -> Llama : model object

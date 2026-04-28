@@ -10,7 +10,7 @@ def run():
 @app.command()
 def main_command(
     query: Optional[str] = typer.Argument(None, help="English request to convert into a command"),
-    model: Optional[str] = typer.Option(None, "--model", "-m", help="Model choice"),
+    model: Optional[int] = typer.Option(None, "--model", "-m", help="Model choice"),
     explain: bool = typer.Option(False, "--explain", "-e", help="Explain the command"),
     debug: bool = typer.Option(False, "--debug", "-d", help="Show full errors and logs"),
     reset: bool = typer.Option(False, "--reset", "-r", help="Reset config.json"),
