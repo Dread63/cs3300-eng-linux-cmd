@@ -1,0 +1,24 @@
+Project Notes - eng-linux-cmd
+==============================
+
+TODO:
+- Add support for Windows (blocked on llama-cpp-python Windows build issues)
+- Improve confidence scoring — currently too many "medium" results
+- Add --history flag to view past session commands
+- Cache model in memory between sessions to avoid reload time
+- Add shell completion support (bash/zsh)
+
+BUGS:
+- cd to a path with spaces fails if not quoted — need to wrap path in quotes
+- alias command just prints a warning instead of silently skipping
+- --reset does not delete downloaded model files (only config/history)
+
+DECISIONS:
+- Chose llama-cpp-python over Ollama because it runs fully local without a daemon
+- Went with GGUF Q4_K_M quantization as the best speed/quality tradeoff on CPU
+- Typer chosen over argparse for cleaner --help output and type hints
+
+NOTES:
+- Model downloads from HuggingFace on first use (~350MB to ~2GB depending on model)
+- Context window is capped at 2048 tokens to keep inference fast on CPU
+- History pruning kicks in at 500 tokens to prevent prompt bloat

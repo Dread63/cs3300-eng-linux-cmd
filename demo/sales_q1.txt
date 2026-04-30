@@ -1,0 +1,48 @@
+January Sales Report
+====================
+Product         Units Sold    Revenue
+Widget A        1240          $62000
+Widget B        830           $41500
+Gadget Pro      215           $107500
+Gadget Lite     640           $32000
+Service Plan    390           $58500
+Accessory Kit   1800          $27000
+Premium Bundle  120           $96000
+
+Total Units: 5235
+Total Revenue: $424500
+
+Top Performer: Gadget Pro (highest revenue per unit)
+Lowest Volume: Premium Bundle
+February Sales Report
+=====================
+Product         Units Sold    Revenue
+Widget A        1105          $55250
+Widget B        940           $47000
+Gadget Pro      280           $140000
+Gadget Lite     720           $36000
+Service Plan    415           $62250
+Accessory Kit   1650          $24750
+Premium Bundle  175           $140000
+
+Total Units: 5285
+Total Revenue: $505250
+
+Top Performer: Gadget Pro / Premium Bundle (tied on revenue)
+Lowest Volume: Premium Bundle
+March Sales Report
+==================
+Product         Units Sold    Revenue
+Widget A        1380          $69000
+Widget B        870           $43500
+Gadget Pro      310           $155000
+Gadget Lite     800           $40000
+Service Plan    450           $67500
+Accessory Kit   2100          $31500
+Premium Bundle  200           $160000
+
+Total Units: 6110
+Total Revenue: $566500
+
+Top Performer: Premium Bundle (highest revenue)
+Lowest Volume: Premium Bundle

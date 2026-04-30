@@ -16,6 +16,7 @@ MODELS = {
     "qwen2.5-0.5b": {
         "name": "qwen2.5-0.5b-instruct-q4_k_m.gguf",
         "url": "https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q4_k_m.gguf?download=true",
+        "chat_format": "chatml",
         "description": (
             "────────────────────────────────────────\n"
             "MODEL     Qwen2.5-0.5B\n"
@@ -45,6 +46,7 @@ MODELS = {
     "qwen2.5-1.5b": {
         "name": "qwen2.5-1.5b-instruct-q5_k_m.gguf",
         "url": "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/qwen2.5-1.5b-instruct-q5_k_m.gguf",
+        "chat_format": "chatml",
         "description": (
             "────────────────────────────────────────\n"
             "MODEL     Qwen2.5-1.5B\n"
@@ -78,6 +80,7 @@ MODELS = {
     "gemma-2b": {
         "name": "gemma-2b-it.gguf",
         "url": "https://huggingface.co/lmstudio-community/gemma-2-2b-it-GGUF/resolve/main/gemma-2-2b-it-Q4_K_M.gguf?download=true",
+        "chat_format": "gemma",
         "description": (
             "────────────────────────────────────────\n"
             "MODEL     Gemma 2B\n"
@@ -109,6 +112,7 @@ MODELS = {
     "deepseek-coder-1.3b": {
     "name": "deepseek-coder-1.3b-instruct.Q4_K_M.gguf",
     "url": "https://huggingface.co/TheBloke/deepseek-coder-1.3b-instruct-GGUF/resolve/main/deepseek-coder-1.3b-instruct.Q4_K_M.gguf?download=true",
+    "chat_format": "deepseek-coder",
     "description": (
         "────────────────────────────────────────\n"
         "MODEL     DeepSeek Coder 1.3B\n"
@@ -361,7 +365,7 @@ def initialize(model_flag: int | None = None) -> Llama:
             model_path=model_full_path,
             n_ctx=2048,
             n_threads=4,
-            chat_format="chatml",
+            chat_format=MODELS[model_key].get("chat_format", "chatml"),
             verbose=False
         )
     except Exception as e:
@@ -491,13 +495,15 @@ def ollama_client(user_input) -> TranslationResult:
 
 #for reset flag
 def reset_config():
-    """Delete local user config.json in application data directory."""
-    if os.path.exists(MODEL_DIR):
+    """Delete all files in application data directory. Returns True if anything was deleted."""
+    if not os.path.exists(MODEL_DIR):
+        return False
 
-        for f in os.listdir(MODEL_DIR):
-            full_path = os.path.join(MODEL_DIR, f)
+    deleted = False
+    for f in os.listdir(MODEL_DIR):
+        full_path = os.path.join(MODEL_DIR, f)
+        if os.path.isfile(full_path):
+            os.remove(full_path)
+            deleted = True
 
-            if os.path.isfile(full_path):
-                os.remove(full_path)
-
-    return False
+    return deleted

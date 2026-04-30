@@ -1,0 +1,31 @@
+[2024-04-28 08:01:03] INFO  Server started on port 8080
+[2024-04-28 08:01:04] INFO  Database connection established
+[2024-04-28 08:03:11] INFO  GET /api/users 200 14ms
+[2024-04-28 08:03:45] INFO  GET /api/products 200 22ms
+[2024-04-28 08:04:02] WARN  Slow query detected: users table (342ms)
+[2024-04-28 08:05:17] INFO  POST /api/orders 201 33ms
+[2024-04-28 08:06:33] ERROR Failed to connect to cache service: Connection refused
+[2024-04-28 08:06:34] WARN  Falling back to direct database reads
+[2024-04-28 08:07:01] INFO  GET /api/orders 200 88ms
+[2024-04-28 08:08:15] ERROR Timeout waiting for payment processor response (5000ms)
+[2024-04-28 08:08:16] ERROR Transaction ID 9f3a2c rolled back
+[2024-04-28 08:09:44] INFO  POST /api/users 201 18ms
+[2024-04-28 08:10:02] WARN  Memory usage at 78% - threshold is 80%
+[2024-04-28 08:11:30] INFO  GET /api/products 200 19ms
+[2024-04-28 08:12:58] ERROR NullPointerException in OrderController.java:147
+[2024-04-28 08:13:01] INFO  Auto-recovery triggered, restarting OrderController
+[2024-04-28 08:14:22] INFO  GET /api/users 200 12ms
+[2024-04-28 08:15:09] WARN  Disk usage at 91% on /var/data
+[2024-04-28 08:16:44] INFO  POST /api/login 200 45ms
+[2024-04-28 08:17:55] ERROR Database connection pool exhausted (max: 50)
+[2024-04-28 08:17:56] ERROR Failed to process request: no available connections
+[2024-04-28 08:18:03] INFO  Recycling stale connections...
+[2024-04-28 08:19:10] INFO  GET /api/health 200 3ms
+[2024-04-28 08:20:00] INFO  Scheduled backup started
+[2024-04-28 08:22:45] INFO  Scheduled backup completed successfully
+[2024-04-28 08:23:17] WARN  Slow query detected: orders table (511ms)
+[2024-04-28 08:24:01] INFO  POST /api/products 201 29ms
+[2024-04-28 08:25:33] INFO  GET /api/orders 200 74ms
+[2024-04-28 08:26:48] ERROR SSL certificate for payments.example.com expires in 7 days
+[2024-04-28 08:27:05] INFO  GET /api/users 200 11ms
+[2024-04-28 08:28:19] INFO  Server graceful shutdown initiated

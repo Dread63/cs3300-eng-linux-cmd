@@ -1,0 +1,28 @@
+{
+    "app": "eng-linux-cmd-demo",
+    "version": "0.1.2",
+    "environment": "development",
+    "server": {
+        "host": "localhost",
+        "port": 8080,
+        "debug": true
+    },
+    "database": {
+        "host": "localhost",
+        "port": 5432,
+        "name": "engcmd_db",
+        "pool_size": 10
+    },
+    "model": {
+        "default": "qwen2.5-0.5b",
+        "max_tokens": 150,
+        "temperature": 0.15,
+        "context_window": 2048
+    },
+    "logging": {
+        "level": "INFO",
+        "log_dir": "./",
+        "rotate_daily": true,
+        "max_log_age_days": 30
+    }
+}

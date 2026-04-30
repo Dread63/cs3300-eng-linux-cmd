@@ -1,0 +1,58 @@
+[
+    {
+        "role": "user",
+        "content": "add up all lines of code within each .py file in this directory"
+    },
+    {
+        "role": "assistant",
+        "content": "COMMAND: wc -l ./*.py\nCONFIDENCE: high\nWARNING: none"
+    },
+    {
+        "role": "user",
+        "content": "now print out which of the .py files had the most lines of code"
+    },
+    {
+        "role": "assistant",
+        "content": "COMMAND: wc -l ./*.py | sort -rn | sed -n '2p'\nCONFIDENCE: high\nWARNING: none"
+    },
+    {
+        "role": "user",
+        "content": "list the permissions for each file in this directory"
+    },
+    {
+        "role": "assistant",
+        "content": "COMMAND: ls -l\nCONFIDENCE: high\nWARNING: none"
+    },
+    {
+        "role": "user",
+        "content": "print every line in each of the python files in this directory that start with the word import"
+    },
+    {
+        "role": "assistant",
+        "content": "COMMAND: grep \"^import\" ./*.py\nCONFIDENCE: high\nWARNING: none"
+    },
+    {
+        "role": "user",
+        "content": "print the cpu architecture and available caches on this device"
+    },
+    {
+        "role": "assistant",
+        "content": "COMMAND: uname -m && sysctl hw.l1dcachesize hw.l1icachesize hw.l2cachesize hw.cachesize\nCONFIDENCE: high\nWARNING: none"
+    },
+    {
+        "role": "user",
+        "content": "show which process is currently taking up the most ram on the device"
+    },
+    {
+        "role": "assistant",
+        "content": "COMMAND: ps aux | sort -k4 -rn | head -5\nCONFIDENCE: high\nWARNING: none"
+    },
+    {
+        "role": "user",
+        "content": "whats the ip address and mac address of this device"
+    },
+    {
+        "role": "assistant",
+        "content": "COMMAND: ifconfig en0 | grep -E \"inet |ether\"\nCONFIDENCE: high\nWARNING: none"
+    }
+]

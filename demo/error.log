@@ -1,0 +1,7 @@
+[2024-04-28 08:06:33] ERROR Failed to connect to cache service: Connection refused
+[2024-04-28 08:08:15] ERROR Timeout waiting for payment processor response (5000ms)
+[2024-04-28 08:08:16] ERROR Transaction ID 9f3a2c rolled back
+[2024-04-28 08:12:58] ERROR NullPointerException in OrderController.java:147
+[2024-04-28 08:17:55] ERROR Database connection pool exhausted (max: 50)
+[2024-04-28 08:17:56] ERROR Failed to process request: no available connections
+[2024-04-28 08:26:48] ERROR SSL certificate for payments.example.com expires in 7 days
