@@ -30,7 +30,7 @@ A command-line tool that translates plain English descriptions into Linux shell 
 
 ### Option 1: Install from GitHub Release (Recommended for Grading)
 ```bash
-pip install https://github.com/Dread63/cs3300-eng-linux-cmd/releases/download/demo-release/eng_linux_cmd-0.1.1-py3-none-any.whl
+pip install https://github.com/Dread63/cs3300-eng-linux-cmd/releases/download/release-v0.1.2/eng_linux_cmd-0.1.2-py3-none-any.whl
 ```
 
 ### Option 2: Install from Source (Editable Mode)
